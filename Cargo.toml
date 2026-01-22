@@ -1,0 +1,74 @@
+[package]
+name = "nntp-rs"
+version = "0.1.1"
+edition = "2021"
+authors = ["jvz-devx"]
+description = "High-performance async NNTP client with compression and connection pooling"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/jvz-devx/nntp-rs"
+documentation = "https://docs.rs/nntp-rs"
+keywords = ["nntp", "usenet", "async", "compression", "newsgroups"]
+categories = ["network-programming", "asynchronous"]
+rust-version = "1.75"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["net", "io-util", "time", "rt"] }
+
+# TLS support
+tokio-rustls = "0.26"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = "0.26"
+
+# Connection pooling
+bb8 = "0.8"
+async-trait = "0.1"
+
+# Compression (RFC 8054 COMPRESS DEFLATE + XFEATURE COMPRESS GZIP)
+flate2 = "1"
+
+# Error handling
+thiserror = "1"
+
+# Retry logic
+rand = "0.8"
+
+# Logging
+tracing = "0.1"
+
+# Binary handling (Phase 2)
+crc32fast = "1"       # CRC32 for yEnc and PAR2
+quick-xml = "0.37"    # NZB XML parsing
+uuid = { version = "1", features = ["v4"] }  # Message-ID generation
+md-5 = "0.10"         # MD5 for PAR2 file verification
+
+# Article format (Phase 3)
+chrono = "0.4"        # Date parsing/formatting for RFC 5536
+
+# SASL authentication (Phase 5)
+base64 = "0.22"       # Base64 encoding for SASL authentication
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full", "test-util"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[features]
+default = []
+# Enable serde support for config serialization
+serde = ["dep:serde"]
+# Enable live integration tests (requires NNTP credentials in .env)
+live-tests = []
+
+[dependencies.serde]
+version = "1"
+features = ["derive"]
+optional = true
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[[example]]
+name = "pool"
+path = "examples/pool.rs"
