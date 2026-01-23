@@ -25,6 +25,9 @@ webpki-roots = "0.26"
 bb8 = "0.8"
 async-trait = "0.1"
 
+# Socket configuration
+socket2 = "0.5"
+
 # Compression (RFC 8054 COMPRESS DEFLATE + XFEATURE COMPRESS GZIP)
 flate2 = "1"
 

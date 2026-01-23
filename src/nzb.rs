@@ -361,7 +361,9 @@ pub fn parse_nzb(xml: &str) -> Result<Nzb> {
                         // Extract attributes
                         for attr in e.attributes().flatten() {
                             let key = attr.key.as_ref();
-                            let value = attr.unescape_value().unwrap_or_default().to_string();
+                            let value = attr.decode_and_unescape_value(reader.decoder())
+                                .unwrap_or_default()
+                                .to_string();
 
                             match key {
                                 b"poster" => poster = value,

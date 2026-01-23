@@ -11,6 +11,37 @@ pub struct NntpResponse {
     pub lines: Vec<String>,
 }
 
+/// NNTP binary response optimized for article fetching
+///
+/// Unlike `NntpResponse` which stores lines as strings, this type stores
+/// the raw binary data directly. This avoids:
+/// - Line-by-line allocations
+/// - UTF-8 validation overhead
+/// - Extra copies when rejoining lines
+///
+/// Use this for `ARTICLE`, `BODY`, and `HEAD` commands where performance matters.
+#[derive(Debug, Clone)]
+pub struct NntpBinaryResponse {
+    /// 3-digit NNTP response code
+    pub code: u16,
+    /// Status message from server
+    pub message: String,
+    /// Raw binary response body (with dot-stuffing already removed)
+    pub data: Vec<u8>,
+}
+
+impl NntpBinaryResponse {
+    /// Check if response indicates success (2xx)
+    pub fn is_success(&self) -> bool {
+        self.code >= 200 && self.code < 300
+    }
+
+    /// Check if response indicates error (4xx or 5xx)
+    pub fn is_error(&self) -> bool {
+        self.code >= 400
+    }
+}
+
 impl NntpResponse {
     /// Check if response indicates success (2xx)
     pub fn is_success(&self) -> bool {

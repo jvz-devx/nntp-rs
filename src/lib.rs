@@ -48,7 +48,7 @@ pub use par2::{
 };
 pub use pool::{NntpPool, RetryConfig};
 pub use ratelimit::{BandwidthLimiter, ConnectionLimiter, ConnectionPermit};
-pub use response::{codes, NntpResponse};
+pub use response::{codes, NntpBinaryResponse, NntpResponse};
 pub use sasl::{decode_sasl_data, encode_sasl_data, SaslMechanism, SaslPlain};
 pub use segments::{FetchConfig, FetchProgress, SegmentFetchResult, SegmentFetcher, SegmentStatus};
 pub use servers::{FailoverStrategy, GroupStats, ServerGroup, ServerStats};

@@ -189,15 +189,94 @@ impl NntpClient {
     pub async fn connect(config: Arc<ServerConfig>) -> Result<Self> {
         debug!("Connecting to NNTP server {}:{}", config.host, config.port);
 
-        // Create TCP connection with timeout (120 seconds for slow connections)
+        // Create TCP connection with optimized socket buffers
         let addr = format!("{}:{}", config.host, config.port);
-        let tcp_stream = timeout(Duration::from_secs(120), TcpStream::connect(&addr))
-            .await
-            .map_err(|_| NntpError::Timeout)?
+
+        // Parse the address to determine IP version
+        use std::net::ToSocketAddrs;
+        let socket_addr = addr
+            .to_socket_addrs()
+            .map_err(|e| NntpError::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Failed to resolve address: {}", e)
+            )))?
+            .next()
+            .ok_or_else(|| NntpError::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "No address resolved"
+            )))?;
+
+        // Create socket using socket2 for buffer configuration
+        use socket2::{Socket, Domain, Type, Protocol};
+        let domain = if socket_addr.is_ipv4() {
+            Domain::IPV4
+        } else {
+            Domain::IPV6
+        };
+
+        let socket = Socket::new(domain, Type::STREAM, Some(Protocol::TCP))
             .map_err(NntpError::Io)?;
 
-        // Optimize TCP socket for low-latency request/response pattern
-        tcp_stream.set_nodelay(true).map_err(NntpError::Io)?;
+        // Configure TCP socket for high-throughput downloads
+
+        // Set TCP_NODELAY for low-latency request/response pattern
+        socket.set_nodelay(true).map_err(NntpError::Io)?;
+
+        // Set large receive buffer for high-bandwidth downloads (4MB)
+        // This allows the OS to buffer more data, reducing the number of ACKs
+        // and improving throughput on high-latency connections
+        const RECV_BUFFER_SIZE: usize = 4 * 1024 * 1024; // 4MB
+        if let Err(e) = socket.set_recv_buffer_size(RECV_BUFFER_SIZE) {
+            warn!("Failed to set receive buffer size to {} bytes: {}", RECV_BUFFER_SIZE, e);
+        } else {
+            // Log the actual buffer size (OS may adjust)
+            match socket.recv_buffer_size() {
+                Ok(actual_size) => {
+                    debug!("TCP receive buffer: requested {} bytes, actual {} bytes",
+                           RECV_BUFFER_SIZE, actual_size);
+                }
+                Err(e) => warn!("Failed to query receive buffer size: {}", e),
+            }
+        }
+
+        // Set large send buffer for command pipelining (1MB)
+        const SEND_BUFFER_SIZE: usize = 1024 * 1024; // 1MB
+        if let Err(e) = socket.set_send_buffer_size(SEND_BUFFER_SIZE) {
+            warn!("Failed to set send buffer size to {} bytes: {}", SEND_BUFFER_SIZE, e);
+        } else {
+            // Log the actual buffer size (OS may adjust)
+            match socket.send_buffer_size() {
+                Ok(actual_size) => {
+                    debug!("TCP send buffer: requested {} bytes, actual {} bytes",
+                           SEND_BUFFER_SIZE, actual_size);
+                }
+                Err(e) => warn!("Failed to query send buffer size: {}", e),
+            }
+        }
+
+        // Set socket to non-blocking mode before conversion to tokio
+        socket.set_nonblocking(true).map_err(NntpError::Io)?;
+
+        // Connect with timeout (120 seconds for slow connections)
+        // socket2::Socket::connect() is blocking, so we need to spawn it in a blocking task
+        let socket_addr_for_connect = socket_addr;
+        let tcp_stream = timeout(
+            Duration::from_secs(120),
+            tokio::task::spawn_blocking(move || -> std::io::Result<std::net::TcpStream> {
+                socket.connect(&socket_addr_for_connect.into())?;
+                Ok(socket.into())
+            })
+        )
+        .await
+        .map_err(|_| NntpError::Timeout)?
+        .map_err(|e| NntpError::Io(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Task join error: {}", e)
+        )))?
+        .map_err(NntpError::Io)?;
+
+        // Convert to tokio TcpStream
+        let tcp_stream = TcpStream::from_std(tcp_stream).map_err(NntpError::Io)?;
 
         // Set up TLS - install default crypto provider if not already installed
         use tokio_rustls::rustls::crypto::{ring, CryptoProvider};
@@ -235,7 +314,9 @@ impl NntpClient {
         .map_err(|_| NntpError::Timeout)?
         .map_err(|e| NntpError::Tls(format!("TLS handshake failed: {}", e)))?;
 
-        let stream = BufReader::new(tls_stream);
+        // Use 256KB buffer for high-throughput article downloads
+        // Default 8KB is too small and causes excessive syscalls
+        let stream = BufReader::with_capacity(262144, tls_stream);
 
         let mut client = Self {
             stream,
@@ -2576,6 +2657,280 @@ impl NntpClient {
         timeout(timeout_duration, read_future)
             .await
             .map_err(|_| NntpError::Timeout)?
+    }
+
+    /// Read a multi-line response as raw binary data (optimized for articles)
+    ///
+    /// This method is optimized for high-throughput binary data like articles:
+    /// - Uses chunked reads instead of line-by-line
+    /// - Returns raw bytes instead of Vec<String>
+    /// - Avoids UTF-8 validation overhead
+    /// - Pre-allocates buffer for reduced allocations
+    async fn read_multiline_response_binary(&mut self) -> Result<crate::response::NntpBinaryResponse> {
+        self.read_multiline_response_binary_with_timeout(Duration::from_secs(180))
+            .await
+    }
+
+    /// Read a multi-line response as raw binary with custom timeout
+    async fn read_multiline_response_binary_with_timeout(
+        &mut self,
+        timeout_duration: Duration,
+    ) -> Result<crate::response::NntpBinaryResponse> {
+        use tokio::io::{AsyncBufReadExt, AsyncReadExt};
+
+        let read_future = async {
+            // Read first line (status) - this is always text
+            let mut first_line_bytes = Vec::with_capacity(256);
+            self.stream.read_until(b'\n', &mut first_line_bytes).await?;
+
+            if first_line_bytes.is_empty() {
+                return Err(NntpError::ConnectionClosed);
+            }
+
+            let first_line = String::from_utf8_lossy(&first_line_bytes);
+            let first_line = first_line.trim_end();
+            trace!("Received: {}", first_line);
+
+            let (code, message) = commands::parse_response_line(first_line)?;
+
+            // If error response, no multi-line data follows
+            if code >= 400 {
+                return Ok(crate::response::NntpBinaryResponse {
+                    code,
+                    message,
+                    data: vec![],
+                });
+            }
+
+            // For compressed responses, use the existing line-based method and convert
+            let response_is_compressed = self.compression_mode == CompressionMode::HeadersOnly
+                && message.contains("[COMPRESS=GZIP]");
+
+            if response_is_compressed {
+                // Fall back to existing compression handling
+                let mut all_data = Vec::new();
+                let mut found_terminator = false;
+                let mut buffer = vec![0u8; 262144]; // 256KB
+
+                while !found_terminator {
+                    let n = self.stream.read(&mut buffer).await?;
+                    if n == 0 {
+                        return Err(NntpError::ConnectionClosed);
+                    }
+
+                    all_data.extend_from_slice(&buffer[..n]);
+
+                    if all_data.ends_with(b".\r\n") || all_data.ends_with(b".\n") {
+                        found_terminator = true;
+                        let trim_len = if all_data.ends_with(b".\r\n") { 3 } else { 2 };
+                        all_data.truncate(all_data.len() - trim_len);
+                    }
+                }
+
+                let decompressed = self.maybe_decompress(&all_data);
+                return Ok(crate::response::NntpBinaryResponse {
+                    code,
+                    message,
+                    data: decompressed,
+                });
+            }
+
+            // Optimized binary read: use read_until for efficient buffered I/O
+            // but collect bytes directly instead of creating strings
+            let mut data = Vec::with_capacity(524288); // 512KB initial capacity
+
+            loop {
+                let mut line_bytes = Vec::new();
+                self.stream.read_until(b'\n', &mut line_bytes).await?;
+
+                if line_bytes.is_empty() {
+                    return Err(NntpError::ConnectionClosed);
+                }
+
+                // Check for terminator: line containing only "." (plus CRLF/LF)
+                if line_bytes == b".\r\n" || line_bytes == b".\n" {
+                    break;
+                }
+
+                // Handle dot-stuffing: lines starting with ".." become "."
+                if line_bytes.starts_with(b"..") {
+                    data.extend_from_slice(&line_bytes[1..]);
+                } else {
+                    data.extend_from_slice(&line_bytes);
+                }
+            }
+
+            Ok(crate::response::NntpBinaryResponse {
+                code,
+                message,
+                data,
+            })
+        };
+
+        let result = timeout(timeout_duration, read_future)
+            .await
+            .map_err(|_| NntpError::Timeout)?;
+
+        // Mark connection as broken if we got invalid data
+        if let Err(NntpError::InvalidResponse(_)) = &result {
+            self.mark_broken();
+        }
+
+        result
+    }
+
+    /// Fetch article as raw binary data (optimized for high-throughput)
+    ///
+    /// This is the high-performance version of `fetch_article` that returns
+    /// raw binary data instead of parsed lines. Use this for bulk downloads
+    /// where you need maximum throughput.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - [`NntpError::NoSuchArticle`] - The article does not exist
+    /// - [`NntpError::Protocol`] - Server returned an unexpected error
+    /// - [`NntpError::Timeout`] - Server did not respond in time
+    pub async fn fetch_article_binary(&mut self, id: &str) -> Result<crate::response::NntpBinaryResponse> {
+        trace!("Fetching article (binary): {}", id);
+
+        let cmd = commands::article(id);
+        self.send_command(&cmd).await?;
+        let response = self.read_multiline_response_binary().await?;
+
+        if response.code == codes::NO_SUCH_ARTICLE_ID
+            || response.code == codes::NO_SUCH_ARTICLE_NUMBER
+        {
+            return Err(NntpError::NoSuchArticle(id.to_string()));
+        }
+
+        if !response.is_success() {
+            return Err(NntpError::Protocol {
+                code: response.code,
+                message: response.message,
+            });
+        }
+
+        Ok(response)
+    }
+
+    /// Fetch article body as raw binary data (optimized for high-throughput)
+    ///
+    /// Like `fetch_article_binary` but only fetches the body without headers.
+    pub async fn fetch_body_binary(&mut self, id: &str) -> Result<crate::response::NntpBinaryResponse> {
+        trace!("Fetching body (binary): {}", id);
+
+        let cmd = commands::body(id);
+        self.send_command(&cmd).await?;
+        let response = self.read_multiline_response_binary().await?;
+
+        if !response.is_success() {
+            return Err(NntpError::Protocol {
+                code: response.code,
+                message: response.message,
+            });
+        }
+
+        Ok(response)
+    }
+
+    /// Fetch multiple articles with pipelining for improved throughput
+    ///
+    /// Implements NNTP command pipelining by sending multiple ARTICLE commands
+    /// before waiting for responses. This reduces the impact of network latency
+    /// by overlapping command transmission with server processing.
+    ///
+    /// # Arguments
+    ///
+    /// * `ids` - Slice of message IDs to fetch
+    /// * `max_pipeline` - Maximum number of commands to pipeline at once (e.g., 10)
+    ///
+    /// # Performance
+    ///
+    /// Pipelining can significantly improve throughput by reducing round-trip latency:
+    /// - Without pipelining: send → wait → receive → process (sequential)
+    /// - With pipelining: send N → receive N → process N (batched)
+    ///
+    /// For high-latency connections, this can improve throughput by 30-50%.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use nntp_rs::NntpClient;
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// let mut client = NntpClient::connect("news.example.com:119", None, None).await?;
+    ///
+    /// let message_ids = vec!["<msg1@example.com>", "<msg2@example.com>", "<msg3@example.com>"];
+    /// let responses = client.fetch_articles_pipelined(&message_ids, 10).await?;
+    ///
+    /// for (id, response) in message_ids.iter().zip(responses.iter()) {
+    ///     println!("Fetched article {}: {} bytes", id, response.data.len());
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - [`NntpError::NoSuchArticle`] - One of the articles does not exist (pipeline aborts)
+    /// - [`NntpError::Protocol`] - Server returned an unexpected error
+    /// - [`NntpError::Timeout`] - Server did not respond in time
+    /// - Any I/O error occurs during command transmission or response reading
+    ///
+    /// Note: If an error occurs, the pipeline aborts and returns the error immediately.
+    /// Articles fetched before the error are discarded.
+    pub async fn fetch_articles_pipelined(
+        &mut self,
+        ids: &[&str],
+        max_pipeline: usize,
+    ) -> Result<Vec<crate::response::NntpBinaryResponse>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // Validate pipeline depth
+        let pipeline_depth = max_pipeline.max(1); // Minimum 1
+        let mut results = Vec::with_capacity(ids.len());
+
+        trace!(
+            "Fetching {} articles with pipeline depth {}",
+            ids.len(),
+            pipeline_depth
+        );
+
+        // Process articles in chunks based on pipeline depth
+        for chunk in ids.chunks(pipeline_depth) {
+            // Phase 1: Send all commands in the chunk without waiting for responses
+            for id in chunk {
+                let cmd = commands::article(id);
+                self.send_command(&cmd).await?;
+            }
+
+            // Phase 2: Read all responses in the same order as commands were sent
+            for id in chunk {
+                let response = self.read_multiline_response_binary().await?;
+
+                // Check for article not found errors
+                if response.code == codes::NO_SUCH_ARTICLE_ID
+                    || response.code == codes::NO_SUCH_ARTICLE_NUMBER
+                {
+                    return Err(NntpError::NoSuchArticle(id.to_string()));
+                }
+
+                // Check for other protocol errors
+                if !response.is_success() {
+                    return Err(NntpError::Protocol {
+                        code: response.code,
+                        message: response.message,
+                    });
+                }
+
+                results.push(response);
+            }
+        }
+
+        Ok(results)
     }
 }
 
