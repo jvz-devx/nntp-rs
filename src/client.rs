@@ -254,16 +254,17 @@ impl NntpClient {
             }
         }
 
-        // Set socket to non-blocking mode before conversion to tokio
-        socket.set_nonblocking(true).map_err(NntpError::Io)?;
-
         // Connect with timeout (120 seconds for slow connections)
         // socket2::Socket::connect() is blocking, so we need to spawn it in a blocking task
+        // NOTE: Connect BEFORE setting non-blocking mode
         let socket_addr_for_connect = socket_addr;
         let tcp_stream = timeout(
             Duration::from_secs(120),
             tokio::task::spawn_blocking(move || -> std::io::Result<std::net::TcpStream> {
+                // Connect while socket is still in blocking mode
                 socket.connect(&socket_addr_for_connect.into())?;
+                // Set non-blocking mode AFTER successful connect
+                socket.set_nonblocking(true)?;
                 Ok(socket.into())
             })
         )
