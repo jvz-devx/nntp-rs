@@ -51,14 +51,18 @@ fn test_builder_add_newsgroup() {
         .unwrap();
 
     assert_eq!(article.headers.newsgroups.len(), 2);
-    assert!(article
-        .headers
-        .newsgroups
-        .contains(&"test.group1".to_string()));
-    assert!(article
-        .headers
-        .newsgroups
-        .contains(&"test.group2".to_string()));
+    assert!(
+        article
+            .headers
+            .newsgroups
+            .contains(&"test.group1".to_string())
+    );
+    assert!(
+        article
+            .headers
+            .newsgroups
+            .contains(&"test.group2".to_string())
+    );
 }
 
 #[test]
@@ -250,10 +254,12 @@ fn test_builder_missing_from_fails() {
         .build();
 
     assert!(result.is_err());
-    assert!(result
-        .unwrap_err()
-        .to_string()
-        .contains("From header is required"));
+    assert!(
+        result
+            .unwrap_err()
+            .to_string()
+            .contains("From header is required")
+    );
 }
 
 #[test]
@@ -265,10 +271,12 @@ fn test_builder_missing_subject_fails() {
         .build();
 
     assert!(result.is_err());
-    assert!(result
-        .unwrap_err()
-        .to_string()
-        .contains("Subject header is required"));
+    assert!(
+        result
+            .unwrap_err()
+            .to_string()
+            .contains("Subject header is required")
+    );
 }
 
 #[test]
@@ -280,10 +288,12 @@ fn test_builder_missing_newsgroups_fails() {
         .build();
 
     assert!(result.is_err());
-    assert!(result
-        .unwrap_err()
-        .to_string()
-        .contains("At least one newsgroup is required"));
+    assert!(
+        result
+            .unwrap_err()
+            .to_string()
+            .contains("At least one newsgroup is required")
+    );
 }
 
 #[test]

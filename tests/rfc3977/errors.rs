@@ -4,7 +4,7 @@
 //! - 4xx: Temporary errors
 //! - 5xx: Permanent errors
 
-use nntp_rs::{codes, NntpError, NntpResponse};
+use nntp_rs::{NntpError, NntpResponse, codes};
 
 // 4xx Temporary Error Codes
 

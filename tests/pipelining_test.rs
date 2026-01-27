@@ -84,7 +84,9 @@ mod live_pipelining_tests {
         }
 
         // Fetch 2 articles with pipeline depth 2
-        let ids: Vec<String> = (info.first..info.first + 2).map(|n: u64| n.to_string()).collect();
+        let ids: Vec<String> = (info.first..info.first + 2)
+            .map(|n: u64| n.to_string())
+            .collect();
         let id_refs: Vec<&str> = ids.iter().map(|s: &String| s.as_str()).collect();
         let results = client.fetch_articles_pipelined(&id_refs, 2).await.unwrap();
 
@@ -123,7 +125,9 @@ mod live_pipelining_tests {
         }
 
         // Fetch 5 articles with pipeline depth 5
-        let ids: Vec<String> = (info.first..info.first + 5).map(|n: u64| n.to_string()).collect();
+        let ids: Vec<String> = (info.first..info.first + 5)
+            .map(|n: u64| n.to_string())
+            .collect();
         let id_refs: Vec<&str> = ids.iter().map(|s: &String| s.as_str()).collect();
         let results = client.fetch_articles_pipelined(&id_refs, 5).await.unwrap();
 
@@ -150,7 +154,9 @@ mod live_pipelining_tests {
         }
 
         // Fetch 10 articles with pipeline depth 10
-        let ids: Vec<String> = (info.first..info.first + 10).map(|n: u64| n.to_string()).collect();
+        let ids: Vec<String> = (info.first..info.first + 10)
+            .map(|n: u64| n.to_string())
+            .collect();
         let id_refs: Vec<&str> = ids.iter().map(|s: &String| s.as_str()).collect();
         let results = client.fetch_articles_pipelined(&id_refs, 10).await.unwrap();
 
@@ -178,7 +184,9 @@ mod live_pipelining_tests {
 
         // Fetch 7 articles with pipeline depth 5
         // This should process 5 + 2 (partial batch at end)
-        let ids: Vec<String> = (info.first..info.first + 7).map(|n: u64| n.to_string()).collect();
+        let ids: Vec<String> = (info.first..info.first + 7)
+            .map(|n: u64| n.to_string())
+            .collect();
         let id_refs: Vec<&str> = ids.iter().map(|s: &String| s.as_str()).collect();
         let results = client.fetch_articles_pipelined(&id_refs, 5).await.unwrap();
 
@@ -205,7 +213,9 @@ mod live_pipelining_tests {
         }
 
         // Fetch 5 articles and verify they come back in order
-        let ids: Vec<String> = (info.first..info.first + 5).map(|n: u64| n.to_string()).collect();
+        let ids: Vec<String> = (info.first..info.first + 5)
+            .map(|n: u64| n.to_string())
+            .collect();
         let id_refs: Vec<&str> = ids.iter().map(|s: &String| s.as_str()).collect();
         let results = client.fetch_articles_pipelined(&id_refs, 5).await.unwrap();
 
@@ -278,7 +288,9 @@ mod live_pipelining_tests {
         }
 
         // Test with pipeline depth 0 (should be clamped to 1)
-        let ids: Vec<String> = (info.first..info.first + 2).map(|n: u64| n.to_string()).collect();
+        let ids: Vec<String> = (info.first..info.first + 2)
+            .map(|n: u64| n.to_string())
+            .collect();
         let id_refs: Vec<&str> = ids.iter().map(|s: &String| s.as_str()).collect();
         let results = client.fetch_articles_pipelined(&id_refs, 0).await.unwrap();
 
@@ -308,7 +320,9 @@ mod live_pipelining_tests {
             return;
         }
 
-        let ids: Vec<String> = (info.first..info.first + 10).map(|n: u64| n.to_string()).collect();
+        let ids: Vec<String> = (info.first..info.first + 10)
+            .map(|n: u64| n.to_string())
+            .collect();
         let id_refs: Vec<&str> = ids.iter().map(|s: &String| s.as_str()).collect();
 
         // Test sequential fetching (pipeline depth 1)

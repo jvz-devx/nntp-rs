@@ -9,7 +9,7 @@
 //!
 //! Reference: https://datatracker.ietf.org/doc/html/rfc4644#section-2.4
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_check_format() {
     let cmd = commands::check("<article123@example.com>");

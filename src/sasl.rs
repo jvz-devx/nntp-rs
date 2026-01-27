@@ -25,7 +25,7 @@
 //! ```
 
 use crate::{NntpError, Result};
-use base64::{engine::general_purpose::STANDARD, Engine};
+use base64::{Engine, engine::general_purpose::STANDARD};
 
 /// Trait for SASL authentication mechanisms
 ///

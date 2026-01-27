@@ -11,7 +11,7 @@
 //! the same response format. These tests focus on command format and
 //! integration-level behavior.
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_over_command_format_with_range() {
     let cmd = commands::over("1-100");

@@ -10,7 +10,7 @@
 
 #![cfg(feature = "live-tests")]
 
-use nntp_rs::{yenc_decode, NntpClient, YencMultipartAssembler};
+use nntp_rs::{NntpClient, YencMultipartAssembler, yenc_decode};
 use std::sync::Arc;
 
 use super::{get_binary_test_group, get_test_config};

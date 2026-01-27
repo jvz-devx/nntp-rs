@@ -6,7 +6,7 @@
 
 use crate::error::{NntpError, Result};
 use crate::nzb::{NzbFile, NzbSegment};
-use crate::yenc::{decode, YencDecoded, YencMultipartAssembler};
+use crate::yenc::{YencDecoded, YencMultipartAssembler, decode};
 use std::collections::HashMap;
 
 /// Status of an article part
@@ -299,7 +299,7 @@ impl ArticleAssembler {
     /// ```
     // Single-part files in NZB format are always numbered as part 1
     // Downloaded status guarantees decoded data exists (set in add_part_bytes)
-    #[allow(clippy::expect_used)]
+    #[expect(clippy::expect_used)]
     pub fn assemble(&self) -> Result<Vec<u8>> {
         // Check completion
         if !self.is_complete() {

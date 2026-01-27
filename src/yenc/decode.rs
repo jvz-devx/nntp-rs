@@ -51,13 +51,12 @@ pub fn decode(input: &[u8]) -> Result<YencDecoded> {
     let mut part = None;
     let mut data_start = 1;
 
-    if lines.len() > 1 {
-        if let Ok(line_str) = std::str::from_utf8(lines[1]) {
-            if line_str.starts_with("=ypart ") {
-                part = Some(parse_ypart(line_str.trim_end_matches('\r'))?);
-                data_start = 2;
-            }
-        }
+    if lines.len() > 1
+        && let Ok(line_str) = std::str::from_utf8(lines[1])
+        && line_str.starts_with("=ypart ")
+    {
+        part = Some(parse_ypart(line_str.trim_end_matches('\r'))?);
+        data_start = 2;
     }
 
     // Find trailer line (=yend)
@@ -142,24 +141,14 @@ fn decode_line_bytes(line: &[u8], output: &mut Vec<u8>) -> Result<()> {
     Ok(())
 }
 
-/// Decode a single yEnc encoded line (string version)
-///
-/// This is a convenience wrapper around `decode_line_bytes()` used in internal tests
-/// to verify the string-to-bytes conversion path. The public API uses `decode_line_bytes()`
-/// directly with byte slices for performance.
-///
-/// Intentionally unused in production (test utility): This function is only called from
-/// `#[cfg(test)]` test cases (`test_decode_line_basic()`, `test_decode_line_with_escape()`)
-/// to verify the string-to-bytes conversion path. Marked as dead_code because Rust's
-/// dead code analysis doesn't recognize test-only usage in the same module.
-#[allow(dead_code)] // Only used in #[cfg(test)] functions
-fn decode_line(line: &str, output: &mut Vec<u8>) -> Result<()> {
-    decode_line_bytes(line.as_bytes(), output)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Convenience wrapper for tests: decode a yEnc line from a string.
+    fn decode_line(line: &str, output: &mut Vec<u8>) -> Result<()> {
+        decode_line_bytes(line.as_bytes(), output)
+    }
 
     #[test]
     fn test_decode_simple() {

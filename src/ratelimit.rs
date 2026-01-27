@@ -181,7 +181,7 @@ impl ConnectionLimiter {
     /// # }
     /// ```
     // Semaphore is never closed while ConnectionLimiter holds Arc reference
-    #[allow(clippy::expect_used)]
+    #[expect(clippy::expect_used)]
     pub async fn acquire(&self) -> ConnectionPermit {
         let permit = self
             .semaphore

@@ -4,7 +4,7 @@
 //!
 //! Tests for the LIST NEWSGROUPS command and response parsing.
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 
 #[test]
 fn test_list_newsgroups_command_format() {

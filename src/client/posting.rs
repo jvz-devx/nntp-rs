@@ -3,8 +3,8 @@ use crate::response::codes;
 use crate::{NntpError, Result};
 use tracing::debug;
 
-use super::state::ConnectionState;
 use super::NntpClient;
+use super::state::ConnectionState;
 
 impl NntpClient {
     /// Post a new article to the server (RFC 3977 Section 6.3.1)

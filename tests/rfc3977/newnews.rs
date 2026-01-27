@@ -4,7 +4,7 @@
 //!
 //! Tests for the NEWNEWS command which lists message-IDs of articles posted since a specified date/time.
 
-use nntp_rs::{codes, commands, NntpError, NntpResponse};
+use nntp_rs::{NntpError, NntpResponse, codes, commands};
 #[test]
 fn test_newnews_command_format() {
     // RFC 3977 §7.4: NEWNEWS wildmat yyyymmdd hhmmss [GMT]

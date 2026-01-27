@@ -4,7 +4,7 @@
 //!
 //! Reference: https://datatracker.ietf.org/doc/html/rfc3977#section-8.5
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_hdr_command_format_basic() {
     let cmd = commands::hdr("Subject", "1-100");

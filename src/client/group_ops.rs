@@ -1,4 +1,4 @@
-use crate::{codes, commands, error::NntpError, NntpClient, Result};
+use crate::{NntpClient, Result, codes, commands, error::NntpError};
 use tracing::debug;
 
 impl NntpClient {

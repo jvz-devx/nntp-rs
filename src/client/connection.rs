@@ -10,16 +10,16 @@ use std::time::Duration;
 use tokio::io::BufReader;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
+use tokio_rustls::TlsConnector;
 use tokio_rustls::rustls::client::danger::{
     HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier,
 };
 use tokio_rustls::rustls::pki_types::{CertificateDer, ServerName, UnixTime};
 use tokio_rustls::rustls::{ClientConfig, DigitallySignedStruct, RootCertStore, SignatureScheme};
-use tokio_rustls::TlsConnector;
 use tracing::{debug, warn};
 
-use super::state::ConnectionState;
 use super::NntpClient;
+use super::state::ConnectionState;
 
 /// TCP connection timeout in seconds
 const TCP_CONNECT_TIMEOUT_SECS: u64 = 120;
@@ -104,8 +104,8 @@ impl NntpClient {
     /// - [`NntpError::Protocol`] - Server rejects the connection
     ///
     /// # Timeouts
-    /// - TCP connection: [`TCP_CONNECT_TIMEOUT_SECS`] seconds
-    /// - TLS handshake: [`TLS_HANDSHAKE_TIMEOUT_SECS`] seconds
+    /// - TCP connection: `TCP_CONNECT_TIMEOUT_SECS` seconds
+    /// - TLS handshake: `TLS_HANDSHAKE_TIMEOUT_SECS` seconds
     pub async fn connect(config: Arc<ServerConfig>) -> Result<Self> {
         debug!("Connecting to NNTP server {}:{}", config.host, config.port);
 
@@ -211,7 +211,7 @@ impl NntpClient {
         let tcp_stream = TcpStream::from_std(tcp_stream).map_err(NntpError::Io)?;
 
         // Set up TLS - install default crypto provider if not already installed
-        use tokio_rustls::rustls::crypto::{ring, CryptoProvider};
+        use tokio_rustls::rustls::crypto::{CryptoProvider, ring};
         let _ = CryptoProvider::install_default(ring::default_provider());
 
         // Configure TLS based on security settings
@@ -463,7 +463,10 @@ mod tests {
     #[test]
     fn test_tcp_nodelay_should_be_enabled() {
         const NODELAY_ENABLED: bool = true;
-        const _: () = assert!(NODELAY_ENABLED, "TCP_NODELAY should be enabled for low-latency NNTP commands");
+        const _: () = assert!(
+            NODELAY_ENABLED,
+            "TCP_NODELAY should be enabled for low-latency NNTP commands"
+        );
     }
 
     /// Test that socket domain detection logic is correct

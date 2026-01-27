@@ -9,7 +9,7 @@ use crate::article::Article;
 use crate::capabilities::Capabilities;
 use crate::commands;
 use crate::error::{NntpError, Result};
-use crate::response::{codes, NntpResponse};
+use crate::response::{NntpResponse, codes};
 use tracing::debug;
 
 impl NntpClient {

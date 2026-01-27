@@ -11,7 +11,6 @@ use crate::response::NntpResponse;
 /// without variant specification. Most clients use LIST ACTIVE or other variants instead,
 /// but this function is provided for complete RFC 3977 compliance. May be needed for
 /// interoperability with legacy servers or strict protocol testing.
-#[allow(dead_code)]
 pub fn list() -> &'static str {
     "LIST\r\n"
 }

@@ -147,7 +147,7 @@ impl NntpClient {
                 return Err(NntpError::InvalidResponse(format!(
                     "Invalid LIST HEADERS keyword: {}. Must be MSGID or RANGE",
                     other
-                )))
+                )));
             }
         };
 

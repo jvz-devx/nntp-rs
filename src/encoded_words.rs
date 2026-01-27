@@ -93,7 +93,7 @@
 //! ```
 
 use crate::error::{NntpError, Result};
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
+use base64::{Engine, engine::general_purpose::STANDARD as BASE64};
 
 /// Remove trailing whitespace (space/tab) from a String in-place.
 fn trim_trailing_whitespace(s: &mut String) {

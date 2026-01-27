@@ -2,7 +2,7 @@
 //!
 //! Reference: https://datatracker.ietf.org/doc/html/rfc4643#section-2.4
 
-use nntp_rs::{decode_sasl_data, encode_sasl_data, NntpError, Result, SaslMechanism};
+use nntp_rs::{NntpError, Result, SaslMechanism, decode_sasl_data, encode_sasl_data};
 
 // Mock SASL mechanism for testing
 struct MockSasl {
@@ -138,9 +138,11 @@ fn test_encode_binary_data() {
     let data = b"\x00\x01\x02\xff\xfe\xfd";
     let encoded = encode_sasl_data(data);
     // Should be valid base64
-    assert!(encoded
-        .chars()
-        .all(|c| { c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=' }));
+    assert!(
+        encoded
+            .chars()
+            .all(|c| { c.is_ascii_alphanumeric() || c == '+' || c == '/' || c == '=' })
+    );
 }
 
 #[test]
@@ -420,7 +422,7 @@ fn test_sasl_plain_null_in_password() {
 
 #[test]
 fn test_sasl_plain_base64_encoding() {
-    use nntp_rs::{encode_sasl_data, SaslPlain};
+    use nntp_rs::{SaslPlain, encode_sasl_data};
 
     let plain = SaslPlain::new("test", "password123");
     let response = plain.initial_response().unwrap().unwrap();
@@ -567,7 +569,7 @@ fn test_authinfo_sasl_various_mechanisms() {
 
 #[test]
 fn test_sasl_response_code_281_accepted() {
-    use nntp_rs::{codes, NntpResponse};
+    use nntp_rs::{NntpResponse, codes};
 
     let response = NntpResponse {
         code: codes::AUTH_ACCEPTED,
@@ -581,7 +583,7 @@ fn test_sasl_response_code_281_accepted() {
 
 #[test]
 fn test_sasl_response_code_383_continue() {
-    use nntp_rs::{codes, NntpResponse};
+    use nntp_rs::{NntpResponse, codes};
 
     let response = NntpResponse {
         code: codes::SASL_CONTINUE,
@@ -598,7 +600,7 @@ fn test_sasl_response_code_383_continue() {
 
 #[test]
 fn test_sasl_response_code_481_rejected() {
-    use nntp_rs::{codes, NntpResponse};
+    use nntp_rs::{NntpResponse, codes};
 
     let response = NntpResponse {
         code: codes::AUTH_REJECTED,
@@ -612,7 +614,7 @@ fn test_sasl_response_code_481_rejected() {
 
 #[test]
 fn test_sasl_response_code_482_out_of_sequence() {
-    use nntp_rs::{codes, NntpResponse};
+    use nntp_rs::{NntpResponse, codes};
 
     let response = NntpResponse {
         code: codes::AUTH_OUT_OF_SEQUENCE,
@@ -626,7 +628,7 @@ fn test_sasl_response_code_482_out_of_sequence() {
 
 #[test]
 fn test_sasl_response_code_483_encryption_required() {
-    use nntp_rs::{codes, NntpResponse};
+    use nntp_rs::{NntpResponse, codes};
 
     let response = NntpResponse {
         code: codes::ENCRYPTION_REQUIRED,
@@ -715,7 +717,7 @@ fn test_sasl_continue_with_empty_marker() {
 
 #[test]
 fn test_sasl_plain_single_round() {
-    use nntp_rs::{encode_sasl_data, SaslPlain};
+    use nntp_rs::{SaslPlain, encode_sasl_data};
 
     // PLAIN is single-round: send initial response, get 281
     let plain = SaslPlain::new("user", "password");
@@ -758,7 +760,7 @@ fn test_sasl_plain_rejects_challenge() {
 
 #[test]
 fn test_sasl_multiple_mechanisms_compatibility() {
-    use nntp_rs::{commands, SaslPlain};
+    use nntp_rs::{SaslPlain, commands};
 
     // Server might advertise multiple mechanisms
     let _mechanisms = ["PLAIN", "DIGEST-MD5", "CRAM-MD5"];

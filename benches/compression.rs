@@ -2,9 +2,9 @@
 //!
 //! Tests performance of COMPRESS DEFLATE and XFEATURE COMPRESS GZIP
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use flate2::write::{DeflateEncoder, GzEncoder};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use flate2::Compression;
+use flate2::write::{DeflateEncoder, GzEncoder};
 use std::io::Write;
 
 /// Sample NNTP response data (typical LIST ACTIVE response with ~1000 newsgroups)

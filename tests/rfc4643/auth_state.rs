@@ -19,7 +19,7 @@
 //!
 //! Reference: https://datatracker.ietf.org/doc/html/rfc4643#section-2.1
 
-use nntp_rs::{codes, NntpResponse};
+use nntp_rs::{NntpResponse, codes};
 // REMOVED: test_double_authentication_rejected
 // This test was self-referential - just checked 502 == 502
 // Real test should call client.authenticate() twice and verify second call fails

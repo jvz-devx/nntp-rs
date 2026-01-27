@@ -5,7 +5,7 @@
 //! - Response code 206 = compression active
 //! - Actual zlib/deflate decompression
 
-use nntp_rs::{codes, NntpResponse};
+use nntp_rs::{NntpResponse, codes};
 
 // Compression Response Codes (RFC 8054 §2.2)
 
@@ -78,9 +78,9 @@ fn test_compression_502_already_active() {
     assert_eq!(response.code, 502);
     assert!(response.is_error());
 }
+use flate2::Compression;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
-use flate2::Compression;
 use std::io::{Read, Write};
 
 #[test]
@@ -353,9 +353,11 @@ fn test_compress_capability_not_advertised_after_activation() {
         // STARTTLS should NOT be present
     ];
 
-    assert!(!capabilities_after_compress
-        .iter()
-        .any(|c| c.starts_with("COMPRESS")));
+    assert!(
+        !capabilities_after_compress
+            .iter()
+            .any(|c| c.starts_with("COMPRESS"))
+    );
     assert!(!capabilities_after_compress.iter().any(|c| c == "STARTTLS"));
 }
 

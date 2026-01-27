@@ -53,80 +53,104 @@ fn test_response_is_error_5xx() {
 #[test]
 fn test_response_boundary_codes() {
     // Test exact boundaries
-    assert!(!NntpResponse {
-        code: 199,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_success());
-    assert!(NntpResponse {
-        code: 200,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_success());
-    assert!(NntpResponse {
-        code: 299,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_success());
-    assert!(!NntpResponse {
-        code: 300,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_success());
+    assert!(
+        !NntpResponse {
+            code: 199,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_success()
+    );
+    assert!(
+        NntpResponse {
+            code: 200,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_success()
+    );
+    assert!(
+        NntpResponse {
+            code: 299,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_success()
+    );
+    assert!(
+        !NntpResponse {
+            code: 300,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_success()
+    );
 
-    assert!(!NntpResponse {
-        code: 299,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_continuation());
-    assert!(NntpResponse {
-        code: 300,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_continuation());
-    assert!(NntpResponse {
-        code: 399,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_continuation());
-    assert!(!NntpResponse {
-        code: 400,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_continuation());
+    assert!(
+        !NntpResponse {
+            code: 299,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_continuation()
+    );
+    assert!(
+        NntpResponse {
+            code: 300,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_continuation()
+    );
+    assert!(
+        NntpResponse {
+            code: 399,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_continuation()
+    );
+    assert!(
+        !NntpResponse {
+            code: 400,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_continuation()
+    );
 
-    assert!(!NntpResponse {
-        code: 399,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_error());
-    assert!(NntpResponse {
-        code: 400,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_error());
-    assert!(NntpResponse {
-        code: 500,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_error());
-    assert!(NntpResponse {
-        code: 999,
-        message: String::new(),
-        lines: vec![]
-    }
-    .is_error());
+    assert!(
+        !NntpResponse {
+            code: 399,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_error()
+    );
+    assert!(
+        NntpResponse {
+            code: 400,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_error()
+    );
+    assert!(
+        NntpResponse {
+            code: 500,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_error()
+    );
+    assert!(
+        NntpResponse {
+            code: 999,
+            message: String::new(),
+            lines: vec![]
+        }
+        .is_error()
+    );
 }
 
 #[test]

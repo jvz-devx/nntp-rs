@@ -10,7 +10,7 @@
 
 #![cfg(feature = "live-tests")]
 
-use nntp_rs::{parse_nzb, NntpClient};
+use nntp_rs::{NntpClient, parse_nzb};
 use std::sync::Arc;
 
 use super::{get_binary_test_group, get_test_config};

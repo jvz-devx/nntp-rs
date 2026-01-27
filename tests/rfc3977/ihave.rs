@@ -6,7 +6,7 @@
 //!
 //! Reference: https://datatracker.ietf.org/doc/html/rfc3977#section-6.3.2
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_ihave_command_format() {
     let cmd = commands::ihave("<test@example.com>");

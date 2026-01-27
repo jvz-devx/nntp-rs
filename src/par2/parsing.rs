@@ -470,7 +470,7 @@ mod tests {
     #[test]
     fn test_parse_file_description_packet() {
         let mut data = vec![0u8; FILE_DESC_PACKET_MIN_SIZE + 9]; // Need at least FILE_DESC_PACKET_MIN_SIZE bytes + filename
-                                                                 // File ID
+        // File ID
         data[0..MD5_HASH_SIZE].fill(1);
         // Hash
         data[MD5_HASH_SIZE..(MD5_HASH_SIZE * 2)].fill(2);

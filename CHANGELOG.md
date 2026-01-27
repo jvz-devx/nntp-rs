@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-01-27
+
+### Changed
+
+- **Breaking (MSRV):** Rust edition upgraded from 2021 to 2024 (requires Rust 1.85+; MSRV remains 1.93)
+- Upgraded `bb8` from 0.8 to 0.9 — uses native `async fn` in traits (RPITIT), eliminating `Pin<Box<dyn Future>>` heap allocations on every pool operation
+- Upgraded `thiserror` from 1 to 2 — cleaner proc-macro implementation, identical API
+- Replaced `parking_lot::Mutex` with `std::sync::Mutex` — removes a dependency; lock durations are trivially short (timestamps and round-robin indices)
+- Replaced `#[allow(...)]` with `#[expect(...)]` (Rust 1.81) — warns when suppressed lints no longer fire, preventing stale suppressions
+- Collapsed nested `if`/`if let` patterns into let-chains (Rust 1.87) where flagged by clippy
+- Moved test-only `decode_line()` helper into `#[cfg(test)]` module
+
+### Removed
+
+- `async-trait` dependency — no longer needed with bb8 0.9's native async trait support
+- `parking_lot` dependency — replaced by `std::sync::Mutex`
+- Stale `#[allow(dead_code)]` / `#[expect(dead_code)]` attributes on 5 public items that edition 2024 no longer considers dead code
+- Stale `#[expect(clippy::unwrap_used)]` / `#[expect(clippy::expect_used)]` attributes on 3 functions that no longer trigger those lints
+
 ## [0.2.0] - 2025-01-27
 
 ### Added

@@ -23,7 +23,7 @@
 //!
 //! Reference: https://datatracker.ietf.org/doc/html/rfc4643
 
-use nntp_rs::{codes, NntpResponse};
+use nntp_rs::{NntpResponse, codes};
 
 // Response Code Classification (RFC 4643 §2.3)
 
@@ -318,9 +318,10 @@ fn test_sasl_mechanisms_list() {
 
     for (mech, _desc) in mechanisms {
         // Verify mechanism names are valid ASCII uppercase
-        assert!(mech
-            .chars()
-            .all(|c| c.is_ascii_uppercase() || c == '-' || c.is_ascii_digit()));
+        assert!(
+            mech.chars()
+                .all(|c| c.is_ascii_uppercase() || c == '-' || c.is_ascii_digit())
+        );
     }
 }
 
@@ -365,9 +366,11 @@ fn test_capability_authinfo_removed_after_auth() {
     ];
 
     // Before auth: AUTHINFO present
-    assert!(capabilities_before
-        .iter()
-        .any(|c| c.starts_with("AUTHINFO")));
+    assert!(
+        capabilities_before
+            .iter()
+            .any(|c| c.starts_with("AUTHINFO"))
+    );
 
     // After auth: AUTHINFO absent
     assert!(!capabilities_after.iter().any(|c| c.starts_with("AUTHINFO")));

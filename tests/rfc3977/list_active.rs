@@ -4,7 +4,7 @@
 //!
 //! Tests for the LIST ACTIVE command and response parsing.
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 
 #[test]
 fn test_list_active_command_format() {

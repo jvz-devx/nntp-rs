@@ -4,7 +4,7 @@
 //!
 //! Tests for the LIST OVERVIEW.FMT command and response parsing.
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_list_overview_fmt_command_format() {
     let cmd = commands::list_overview_fmt();

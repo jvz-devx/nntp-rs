@@ -5,7 +5,7 @@
 //! The MODE READER command instructs the server to switch to reader mode,
 //! indicating this is a news reading client (as opposed to a news transfer agent).
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_mode_reader_command_format() {
     let cmd = commands::mode_reader();

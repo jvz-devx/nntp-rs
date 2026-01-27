@@ -236,7 +236,7 @@ mod tests {
         // Test multi-part encoding
         let data = b"Part 1 data here";
         let total_file_size = 768000; // Entire file size
-                                      // Format: (part, total_parts, begin, end, total_file_size)
+        // Format: (part, total_parts, begin, end, total_file_size)
         let encoded = encode(
             data,
             "file.rar",

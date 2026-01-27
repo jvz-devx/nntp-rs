@@ -72,7 +72,6 @@ impl NntpConnectionManager {
     }
 }
 
-#[async_trait::async_trait]
 impl bb8::ManageConnection for NntpConnectionManager {
     type Connection = NntpClient;
     type Error = NntpError;

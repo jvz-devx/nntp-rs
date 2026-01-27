@@ -414,8 +414,10 @@ fn test_multipart_alternative_html_and_text() {
 
     assert!(article.is_mime());
     assert!(article.is_multipart());
-    assert!(article
-        .content_type()
-        .unwrap()
-        .contains("multipart/alternative"));
+    assert!(
+        article
+            .content_type()
+            .unwrap()
+            .contains("multipart/alternative")
+    );
 }

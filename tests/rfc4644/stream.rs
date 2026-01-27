@@ -8,7 +8,7 @@
 //!
 //! Reference: https://datatracker.ietf.org/doc/html/rfc4644#section-2.3
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_mode_stream_format() {
     let cmd = commands::mode_stream();

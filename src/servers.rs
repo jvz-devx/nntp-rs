@@ -40,10 +40,10 @@
 use crate::pool::NntpConnectionManager;
 use crate::{NntpError, NntpPool, Result, ServerConfig};
 use bb8::PooledConnection;
-use parking_lot::Mutex;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::Instant;
 
 /// Per-server performance statistics
@@ -169,14 +169,20 @@ impl AtomicServerStats {
         self.successful_requests.fetch_add(1, Ordering::Relaxed);
         self.total_bytes_downloaded
             .fetch_add(bytes, Ordering::Relaxed);
-        *self.last_success_time.lock() = Some(Instant::now());
+        *self
+            .last_success_time
+            .lock()
+            .unwrap_or_else(|e| e.into_inner()) = Some(Instant::now());
         self.consecutive_failures.store(0, Ordering::Relaxed);
     }
 
     fn record_failure(&self) {
         self.total_requests.fetch_add(1, Ordering::Relaxed);
         self.failed_requests.fetch_add(1, Ordering::Relaxed);
-        *self.last_failure_time.lock() = Some(Instant::now());
+        *self
+            .last_failure_time
+            .lock()
+            .unwrap_or_else(|e| e.into_inner()) = Some(Instant::now());
         self.consecutive_failures.fetch_add(1, Ordering::Relaxed);
     }
 
@@ -193,8 +199,14 @@ impl AtomicServerStats {
             failed_requests: self.failed_requests.load(Ordering::Relaxed),
             not_found_requests: self.not_found_requests.load(Ordering::Relaxed),
             total_bytes_downloaded: self.total_bytes_downloaded.load(Ordering::Relaxed),
-            last_success_time: *self.last_success_time.lock(),
-            last_failure_time: *self.last_failure_time.lock(),
+            last_success_time: *self
+                .last_success_time
+                .lock()
+                .unwrap_or_else(|e| e.into_inner()),
+            last_failure_time: *self
+                .last_failure_time
+                .lock()
+                .unwrap_or_else(|e| e.into_inner()),
             consecutive_failures: self.consecutive_failures.load(Ordering::Relaxed),
         }
     }
@@ -244,7 +256,7 @@ struct ServerEntry {
     ///
     /// Intentionally unused (RFC completeness): This field is reserved for future
     /// API enhancements without breaking changes to the struct layout.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     config: ServerConfig,
     /// Priority (higher = preferred)
     priority: u32,
@@ -486,7 +498,10 @@ impl ServerGroup {
             }
             FailoverStrategy::RoundRobin => {
                 // Rotate through all servers
-                let mut index = self.round_robin_index.lock();
+                let mut index = self
+                    .round_robin_index
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner());
                 let start = *index;
                 *index = (*index + 1) % self.servers.len();
 
@@ -511,7 +526,10 @@ impl ServerGroup {
                     // No healthy servers, fall back to all
                     (0..self.servers.len()).collect()
                 } else {
-                    let mut index = self.round_robin_index.lock();
+                    let mut index = self
+                        .round_robin_index
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner());
                     let start = *index % healthy.len();
                     *index = (*index + 1) % healthy.len();
 

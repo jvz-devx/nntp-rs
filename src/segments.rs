@@ -3,9 +3,9 @@
 //! This module provides functionality to fetch NZB segments with retry logic,
 //! progress tracking, and priority queue support.
 
+use crate::NntpClient;
 use crate::error::{NntpError, Result};
 use crate::nzb::NzbSegment;
-use crate::NntpClient;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, warn};
@@ -392,7 +392,7 @@ impl SegmentFetcher {
 
         // All results must be Some: every index 0..segments.len() is visited exactly once
         // in the two loops above (priority order, then remaining segments)
-        #[allow(clippy::expect_used)]
+        #[expect(clippy::expect_used)]
         {
             Ok(results
                 .into_iter()

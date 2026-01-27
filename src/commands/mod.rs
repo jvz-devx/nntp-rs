@@ -54,7 +54,6 @@ pub fn authinfo_sasl_continue(response: &str) -> String {
 /// not via STARTTLS (explicit upgrade). Most modern deployments use implicit TLS on
 /// port 563 rather than STARTTLS on port 119. This function is provided for complete
 /// RFC 4642 compliance and may be used in future if explicit TLS upgrade is implemented.
-#[allow(dead_code)]
 pub fn starttls() -> &'static str {
     "STARTTLS\r\n"
 }
@@ -101,7 +100,6 @@ pub fn capabilities() -> &'static str {
 /// used in practice - most clients use the basic `capabilities()` command instead. This
 /// variant is provided for complete RFC 3977 compliance and potential future use cases
 /// where capability-specific queries are needed.
-#[allow(dead_code)]
 pub fn capabilities_with_keyword(keyword: &str) -> String {
     format!("CAPABILITIES {}\r\n", keyword)
 }

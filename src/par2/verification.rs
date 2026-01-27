@@ -102,11 +102,11 @@ impl Par2File {
 
         for (global_idx, mapping) in slice_mappings.iter().enumerate() {
             // If we've moved to a new file, verify the previous file's slices
-            if let Some(prev_id) = current_file_id {
-                if prev_id != mapping.file_id {
-                    // Process completed file - already handled by file_damaged_slices
-                    file_damaged_slices.clear();
-                }
+            if let Some(prev_id) = current_file_id
+                && prev_id != mapping.file_id
+            {
+                // Process completed file - already handled by file_damaged_slices
+                file_damaged_slices.clear();
             }
 
             current_file_id = Some(mapping.file_id);
@@ -125,10 +125,10 @@ impl Par2File {
             }
 
             // Verify this slice if IFSC packet exists
-            if let Some(ifsc) = self.ifsc_packets.get(&mapping.file_id) {
-                if is_slice_damaged(file_data, ifsc, mapping) == Some(true) {
-                    damaged_slices.push(global_idx);
-                }
+            if let Some(ifsc) = self.ifsc_packets.get(&mapping.file_id)
+                && is_slice_damaged(file_data, ifsc, mapping) == Some(true)
+            {
+                damaged_slices.push(global_idx);
             }
         }
 
@@ -262,7 +262,6 @@ impl Par2File {
     /// # Returns
     /// Vector of damaged slice indices (0-based)
     // Main packet existence is validated by slice_size() check
-    #[allow(clippy::expect_used)]
     fn verify_slices(&self, file_data: &[u8], ifsc: &IfscPacket) -> Result<Vec<usize>> {
         let slice_size = self
             .slice_size()

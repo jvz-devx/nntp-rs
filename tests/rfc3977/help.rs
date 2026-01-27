@@ -5,7 +5,7 @@
 //! The HELP command requests help text from the server, which typically includes
 //! a list of supported commands and server-specific information.
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_help_command_format() {
     let cmd = commands::help();

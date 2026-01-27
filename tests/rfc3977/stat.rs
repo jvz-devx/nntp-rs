@@ -5,7 +5,7 @@
 //! These tests verify the STAT command which checks article existence and
 //! retrieves metadata without downloading the article content.
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_stat_command_format_with_number() {
     let cmd = commands::stat("12345");

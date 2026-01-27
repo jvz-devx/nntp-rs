@@ -9,7 +9,7 @@
 //! - NEXT - Navigate to next article
 //! - LAST - Navigate to previous article
 
-use crate::{commands, response::codes, NntpError, NntpResponse, Result};
+use crate::{NntpError, NntpResponse, Result, commands, response::codes};
 use tracing::trace;
 
 use super::NntpClient;

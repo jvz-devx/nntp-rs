@@ -4,7 +4,7 @@
 //!
 //! Tests for the NEWGROUPS command which lists newsgroups created since a specified date/time.
 
-use nntp_rs::{codes, commands, NntpError, NntpResponse};
+use nntp_rs::{NntpError, NntpResponse, codes, commands};
 #[test]
 fn test_newgroups_command_format() {
     // RFC 3977 §7.3: NEWGROUPS yyyymmdd hhmmss [GMT]

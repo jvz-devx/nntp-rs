@@ -79,7 +79,7 @@ impl YencMultipartAssembler {
     /// - The part overlaps with an existing part
     /// - The part has inconsistent metadata
     // expect() is used here for invariants that are guaranteed by prior checks (is_multipart, Option state)
-    #[allow(clippy::expect_used)]
+    #[expect(clippy::expect_used)]
     pub fn add_part(&mut self, decoded: YencDecoded) -> Result<()> {
         // Validate this is a multi-part file
         if !decoded.is_multipart() {
@@ -112,29 +112,29 @@ impl YencMultipartAssembler {
         } else {
             // Validate consistency
             // SAFETY: total_parts, total_size, and filename are all Some in this else branch
-            if let Some(expected_total) = self.total_parts {
-                if expected_total != total {
-                    return Err(NntpError::InvalidResponse(format!(
-                        "Inconsistent total parts: expected {}, got {}",
-                        expected_total, total
-                    )));
-                }
+            if let Some(expected_total) = self.total_parts
+                && expected_total != total
+            {
+                return Err(NntpError::InvalidResponse(format!(
+                    "Inconsistent total parts: expected {}, got {}",
+                    expected_total, total
+                )));
             }
-            if let Some(expected_size) = self.total_size {
-                if expected_size != decoded.header.size {
-                    return Err(NntpError::InvalidResponse(format!(
-                        "Inconsistent total size: expected {}, got {}",
-                        expected_size, decoded.header.size
-                    )));
-                }
+            if let Some(expected_size) = self.total_size
+                && expected_size != decoded.header.size
+            {
+                return Err(NntpError::InvalidResponse(format!(
+                    "Inconsistent total size: expected {}, got {}",
+                    expected_size, decoded.header.size
+                )));
             }
-            if let Some(ref expected_name) = self.filename {
-                if expected_name != &decoded.header.name {
-                    return Err(NntpError::InvalidResponse(format!(
-                        "Inconsistent filename: expected {}, got {}",
-                        expected_name, decoded.header.name
-                    )));
-                }
+            if let Some(ref expected_name) = self.filename
+                && expected_name != &decoded.header.name
+            {
+                return Err(NntpError::InvalidResponse(format!(
+                    "Inconsistent filename: expected {}, got {}",
+                    expected_name, decoded.header.name
+                )));
             }
         }
 
@@ -373,7 +373,7 @@ mod tests {
     fn test_assembler_missing_parts() {
         let data = b"Test";
         let total_size = 12; // Assume 3 parts of 4 bytes each
-                             // Format: (part, total_parts, begin, end, total_file_size)
+        // Format: (part, total_parts, begin, end, total_file_size)
         let part1 = encode(data, "test.bin", 128, Some((1, 3, 1, 4, total_size))).unwrap();
         let decoded1 = decode(&part1).unwrap();
 
@@ -392,7 +392,7 @@ mod tests {
     fn test_assembler_duplicate_part() {
         let data = b"Test";
         let total_size = 8; // 2 parts of 4 bytes each
-                            // Format: (part, total_parts, begin, end, total_file_size)
+        // Format: (part, total_parts, begin, end, total_file_size)
         let part1 = encode(data, "test.bin", 128, Some((1, 2, 1, 4, total_size))).unwrap();
         let decoded1 = decode(&part1).unwrap();
         let decoded1_dup = decode(&part1).unwrap();
@@ -456,10 +456,12 @@ mod tests {
         // Try to add part with inconsistent metadata
         let result = assembler.add_part(decoded2);
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Inconsistent total parts"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Inconsistent total parts")
+        );
     }
 
     #[test]
@@ -472,17 +474,19 @@ mod tests {
         let result = assembler.add_part(decoded);
 
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Cannot add single-part file"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Cannot add single-part file")
+        );
     }
 
     #[test]
     fn test_assembler_getters() {
         let data = b"Hello";
         let total_size = 15; // 3 parts of 5 bytes each
-                             // Format: (part, total_parts, begin, end, total_file_size)
+        // Format: (part, total_parts, begin, end, total_file_size)
         let part1 = encode(data, "test.bin", 128, Some((1, 3, 1, 5, total_size))).unwrap();
         let decoded1 = decode(&part1).unwrap();
 

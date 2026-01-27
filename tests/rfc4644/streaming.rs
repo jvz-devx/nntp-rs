@@ -8,7 +8,7 @@
 //!
 //! Reference: https://datatracker.ietf.org/doc/html/rfc4644
 
-use nntp_rs::{codes, NntpResponse};
+use nntp_rs::{NntpResponse, codes};
 
 // Streaming Response Codes (RFC 4644)
 

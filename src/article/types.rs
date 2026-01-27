@@ -417,7 +417,7 @@ impl Article {
 
         // Write required headers
         // SAFETY: write! to String is infallible (OOM aside)
-        #[allow(clippy::unwrap_used)]
+        #[expect(clippy::unwrap_used)]
         {
             write!(result, "Date: {}\r\n", self.headers.date).unwrap();
             write!(result, "From: {}\r\n", self.headers.from).unwrap();

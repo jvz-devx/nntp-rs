@@ -5,7 +5,7 @@
 //! The CAPABILITIES command allows a client to determine which extensions
 //! and features the server supports.
 
-use nntp_rs::{codes, commands, Capabilities, NntpResponse};
+use nntp_rs::{Capabilities, NntpResponse, codes, commands};
 #[test]
 fn test_capabilities_command_format() {
     let cmd = commands::capabilities();

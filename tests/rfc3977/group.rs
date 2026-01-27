@@ -3,8 +3,8 @@
 //! These tests verify compliance with GROUP response format:
 //! Response: "211 number low high group"
 
-use nntp_rs::commands::parse_group_response;
 use nntp_rs::NntpResponse;
+use nntp_rs::commands::parse_group_response;
 
 // Valid GROUP Response Parsing (RFC 3977 §6.1.1)
 

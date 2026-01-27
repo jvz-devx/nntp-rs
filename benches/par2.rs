@@ -2,7 +2,7 @@
 //!
 //! Tests performance of MD5 hashing and CRC32 checks used in PAR2 verification
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 
 /// Generate random-ish file data for benchmarking
 fn generate_file_data(size: usize) -> Vec<u8> {

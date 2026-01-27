@@ -10,7 +10,7 @@
 //!
 //! Both commands return the same response format: "223 n message-id"
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_next_command_format() {
     let cmd = commands::next();

@@ -187,7 +187,7 @@ impl Nzb {
     ///
     /// Similarly, `String::from_utf8()` on the final buffer is guaranteed to
     /// succeed because `quick-xml` only writes valid UTF-8 sequences.
-    #[allow(clippy::unwrap_used)]
+    #[expect(clippy::unwrap_used)]
     pub fn to_xml(&self) -> String {
         // Build the XML body first with quick-xml
         let mut writer = Writer::new_with_indent(Cursor::new(Vec::new()), b' ', 2);
@@ -385,7 +385,6 @@ fn parse_segment_attributes(e: &BytesStart) -> (u64, u32) {
 
 // XML attribute parsing uses unwrap_or_default for missing/invalid values (graceful fallback)
 // unescape() returns Cow which is always valid (even if malformed, returns original)
-#[allow(clippy::unwrap_used)]
 pub fn parse_nzb(xml: &str) -> Result<Nzb> {
     let mut reader = Reader::from_str(xml);
     reader.config_mut().trim_text(true);
@@ -438,11 +437,12 @@ pub fn parse_nzb(xml: &str) -> Result<Nzb> {
             Ok(Event::Empty(ref e)) => {
                 // Handle self-closing tags if needed
                 let name = e.name();
-                if name.as_ref() == b"segment" && in_segments {
-                    if let Some(ref mut _file) = current_file {
-                        let (_bytes, _number) = parse_segment_attributes(e);
-                        // Empty segment tag, no message-id - skip
-                    }
+                if name.as_ref() == b"segment"
+                    && in_segments
+                    && let Some(ref mut _file) = current_file
+                {
+                    let (_bytes, _number) = parse_segment_attributes(e);
+                    // Empty segment tag, no message-id - skip
                 }
             }
             Ok(Event::End(ref e)) => {
@@ -484,7 +484,7 @@ pub fn parse_nzb(xml: &str) -> Result<Nzb> {
                 return Err(NntpError::InvalidResponse(format!(
                     "XML parse error: {}",
                     e
-                )))
+                )));
             }
             _ => {}
         }
@@ -501,7 +501,6 @@ pub fn parse_nzb(xml: &str) -> Result<Nzb> {
 /// Helper to parse segments (second pass needed for message-id extraction)
 // XML parsing uses unwrap_or_default for missing/invalid numeric values (graceful fallback)
 // unescape() returns Cow which is always valid (even if malformed, returns original)
-#[allow(clippy::unwrap_used)]
 fn parse_nzb_segments(nzb: &mut Nzb, xml: &str) -> Result<()> {
     let mut reader = Reader::from_str(xml);
     reader.config_mut().trim_text(true);
@@ -552,7 +551,7 @@ fn parse_nzb_segments(nzb: &mut Nzb, xml: &str) -> Result<()> {
                 return Err(NntpError::InvalidResponse(format!(
                     "XML parse error in segments: {}",
                     e
-                )))
+                )));
             }
             _ => {}
         }

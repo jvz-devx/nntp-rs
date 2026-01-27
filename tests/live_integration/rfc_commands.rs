@@ -150,12 +150,18 @@ async fn test_article_navigation() {
     // Try NEXT if there are more articles
     if count > 1 {
         let next_info = client.next().await.unwrap();
-        println!("NEXT: article_num={}, message_id={}", next_info.number, next_info.message_id);
+        println!(
+            "NEXT: article_num={}, message_id={}",
+            next_info.number, next_info.message_id
+        );
         assert!(next_info.number > stat_info.number);
 
         // LAST should go back
         let prev_info = client.last().await.unwrap();
-        println!("LAST: article_num={}, message_id={}", prev_info.number, prev_info.message_id);
+        println!(
+            "LAST: article_num={}, message_id={}",
+            prev_info.number, prev_info.message_id
+        );
         assert_eq!(prev_info.number, stat_info.number);
         assert_eq!(prev_info.message_id, stat_info.message_id);
     }

@@ -2,7 +2,7 @@
 //!
 //! Reference: https://datatracker.ietf.org/doc/html/rfc6048#section-3
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_list_counts_command_format() {
     let cmd = commands::list_counts("*");

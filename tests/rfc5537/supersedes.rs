@@ -3,7 +3,7 @@
 //! Reference: https://datatracker.ietf.org/doc/html/rfc5537#section-5.4
 //! Reference: https://datatracker.ietf.org/doc/html/rfc5536#section-3.2.12
 
-use nntp_rs::article::{parse_article, ArticleBuilder};
+use nntp_rs::article::{ArticleBuilder, parse_article};
 
 // PARSING TESTS
 

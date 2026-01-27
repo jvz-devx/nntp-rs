@@ -1,7 +1,7 @@
 //! NNTP authentication support (AUTHINFO USER/PASS and SASL)
 
-use super::state::ConnectionState;
 use super::NntpClient;
+use super::state::ConnectionState;
 use crate::commands;
 use crate::error::{NntpError, Result};
 use crate::response::codes;

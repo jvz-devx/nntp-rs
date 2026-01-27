@@ -1,5 +1,5 @@
 #![doc = include_str!("../README.md")]
-#![allow(rustdoc::bare_urls)]
+#![expect(rustdoc::bare_urls)]
 // Deny unwrap/expect in production code (tests are exempt via clippy.toml)
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::expect_used)]
@@ -37,7 +37,7 @@ pub mod validation;
 /// yEnc binary encoding/decoding for Usenet
 pub mod yenc;
 
-pub use article::{parse_article, parse_headers, Article, ArticleBuilder, ControlMessage, Headers};
+pub use article::{Article, ArticleBuilder, ControlMessage, Headers, parse_article, parse_headers};
 pub use assembler::{ArticleAssembler, PartInfo, PartStatus};
 pub use cache::{HeaderCache, LruHeaderCache};
 pub use capabilities::Capabilities;
@@ -45,21 +45,21 @@ pub use client::NntpClient;
 pub use commands::{ArticleInfo, DistributionInfo, GroupInfo, HdrEntry, ModeratorInfo, XoverEntry};
 pub use config::ServerConfig;
 pub use error::{NntpError, Result};
-pub use nzb::{parse_nzb, Nzb, NzbFile, NzbSegment};
+pub use nzb::{Nzb, NzbFile, NzbSegment, parse_nzb};
 pub use par2::{
     CreatorPacket, FileDescriptionPacket, FileStatus, FileVerification, IfscPacket, MainPacket,
     PacketHeader, PacketType, Par2File, Par2Set, RecoverySlicePacket,
 };
 pub use pool::{NntpPool, RetryConfig};
 pub use ratelimit::{BandwidthLimiter, ConnectionLimiter, ConnectionPermit};
-pub use response::{codes, NntpBinaryResponse, NntpResponse};
-pub use sasl::{decode_sasl_data, encode_sasl_data, SaslMechanism, SaslPlain};
+pub use response::{NntpBinaryResponse, NntpResponse, codes};
+pub use sasl::{SaslMechanism, SaslPlain, decode_sasl_data, encode_sasl_data};
 pub use segments::{FetchConfig, FetchProgress, SegmentFetchResult, SegmentFetcher, SegmentStatus};
 pub use servers::{FailoverStrategy, GroupStats, ServerGroup, ServerStats};
 pub use validation::{
-    parse_date, validate_date, validate_message_id, validate_newsgroup_name, ValidationConfig,
+    ValidationConfig, parse_date, validate_date, validate_message_id, validate_newsgroup_name,
 };
 pub use yenc::{
-    decode as yenc_decode, encode as yenc_encode, YencDecoded, YencEnd, YencHeader,
-    YencMultipartAssembler, YencPart,
+    YencDecoded, YencEnd, YencHeader, YencMultipartAssembler, YencPart, decode as yenc_decode,
+    encode as yenc_encode,
 };

@@ -1,10 +1,10 @@
+use crate::Result;
 use crate::commands;
 use crate::response::codes;
-use crate::Result;
 use tracing::{debug, trace, warn};
 
-use super::state::CompressionMode;
 use super::NntpClient;
+use super::state::CompressionMode;
 
 impl NntpClient {
     /// Attempt to enable compression with fallback to GZIP
@@ -131,9 +131,9 @@ impl NntpClient {
 #[cfg(test)]
 mod tests {
     use crate::client::state::CompressionMode;
+    use flate2::Compression;
     use flate2::read::{DeflateDecoder, ZlibDecoder};
     use flate2::write::{DeflateEncoder, ZlibEncoder};
-    use flate2::Compression;
     use std::io::{Read, Write};
 
     // ========================================================================

@@ -5,7 +5,7 @@
 //! These tests verify the LISTGROUP command which returns a list of article
 //! numbers currently available in the specified newsgroup.
 
-use nntp_rs::{codes, commands, NntpResponse};
+use nntp_rs::{NntpResponse, codes, commands};
 #[test]
 fn test_listgroup_command_format_basic() {
     let cmd = commands::listgroup("alt.test");

@@ -91,7 +91,6 @@ pub mod codes {
     /// Intentionally unused (RFC completeness): This response code (202) is from the
     /// obsolete SLAVE command in RFC 977, deprecated in RFC 3977. Kept for compatibility
     /// with legacy servers and complete RFC reference implementation.
-    #[allow(dead_code)]
     pub const SLAVE_STATUS_NOTED: u16 = 202;
     /// Streaming OK (RFC 4644 Section 2.3)
     pub const STREAMING_OK: u16 = 203;
@@ -100,7 +99,6 @@ pub mod codes {
     /// Intentionally unused (RFC completeness): This response code (205) indicates
     /// graceful connection closure. Kept for complete RFC 3977 compliance and potential
     /// future use in connection lifecycle management.
-    #[allow(dead_code)]
     pub const CLOSING_CONNECTION: u16 = 205;
     /// Compression active (RFC 8054)
     pub const COMPRESSION_ACTIVE: u16 = 206;
@@ -238,32 +236,40 @@ mod tests {
     #[test]
     fn test_boundary_codes() {
         // 199 is not success
-        assert!(!NntpResponse {
-            code: 199,
-            message: String::new(),
-            lines: vec![]
-        }
-        .is_success());
+        assert!(
+            !NntpResponse {
+                code: 199,
+                message: String::new(),
+                lines: vec![]
+            }
+            .is_success()
+        );
         // 200 is success
-        assert!(NntpResponse {
-            code: 200,
-            message: String::new(),
-            lines: vec![]
-        }
-        .is_success());
+        assert!(
+            NntpResponse {
+                code: 200,
+                message: String::new(),
+                lines: vec![]
+            }
+            .is_success()
+        );
         // 299 is success
-        assert!(NntpResponse {
-            code: 299,
-            message: String::new(),
-            lines: vec![]
-        }
-        .is_success());
+        assert!(
+            NntpResponse {
+                code: 299,
+                message: String::new(),
+                lines: vec![]
+            }
+            .is_success()
+        );
         // 300 is not success
-        assert!(!NntpResponse {
-            code: 300,
-            message: String::new(),
-            lines: vec![]
-        }
-        .is_success());
+        assert!(
+            !NntpResponse {
+                code: 300,
+                message: String::new(),
+                lines: vec![]
+            }
+            .is_success()
+        );
     }
 }

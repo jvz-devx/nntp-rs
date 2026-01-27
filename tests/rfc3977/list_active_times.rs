@@ -4,7 +4,7 @@
 //!
 //! Tests for the LIST ACTIVE.TIMES command and response parsing.
 
-use nntp_rs::{codes, commands, NntpError, NntpResponse};
+use nntp_rs::{NntpError, NntpResponse, codes, commands};
 #[test]
 fn test_list_active_times_command_format() {
     let cmd = commands::list_active_times("*");

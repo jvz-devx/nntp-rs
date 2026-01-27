@@ -188,7 +188,7 @@ impl LruHeaderCache {
         let lru_article = self
             .access_order
             .iter()
-            .min_by_key(|(_, &access_count)| access_count)
+            .min_by_key(|&(_, &access_count)| access_count)
             .map(|(&article_number, _)| article_number)?;
 
         self.entries.remove(&lru_article);
