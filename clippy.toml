@@ -1,0 +1,119 @@
+# Clippy configuration for nntp-rs
+# See: https://doc.rust-lang.org/clippy/lint_configuration.html
+
+# Cognitive complexity threshold: maximum allowed complexity for functions
+# Default is 25, we set to 20 to encourage simpler functions
+cognitive-complexity-threshold = 20
+
+# Maximum allowed lines for a function
+# Default is 100, we set to 80 for better maintainability
+too-many-lines-threshold = 80
+
+# Maximum allowed arguments for a function
+# Default is 7, keep at 7 for flexibility with async functions
+too-many-arguments-threshold = 7
+
+# Maximum allowed type complexity
+# Default is 250, we set to 200 to encourage simpler types
+type-complexity-threshold = 200
+
+# Maximum nesting level for blocks
+# Default is 7, we set to 5 for better readability
+excessive-nesting-threshold = 5
+
+# Large stack array threshold (in bytes)
+# Warn about stack arrays larger than this (potential stack overflow)
+# Default is 512KB, we set to 1MB for performance-critical buffers
+too-large-for-stack = 1048576
+
+# Future size threshold (in bytes)
+# Warn about large futures that might benefit from boxing
+# Default is 16KB, keep as-is for async performance monitoring
+future-size-threshold = 16384
+
+# Minimum identifier character count
+# Allow 2-letter abbreviations (like 'id', 'io')
+# Exceptions allowed via allow-list
+min-ident-chars-threshold = 2
+allowed-idents-below-min-chars = ["i", "j", "k", "n", "x", "y", "z", "id", "tx", "rx"]
+
+# Allow unwrap/expect in tests (production code will be checked separately)
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-print-in-tests = true
+allow-dbg-in-tests = true
+allow-indexing-slicing-in-tests = true
+
+# Disallowed methods (use alternatives)
+disallowed-methods = []
+
+# Disallowed types (use alternatives)
+disallowed-types = []
+
+# Standard naming conventions - disallow certain names
+disallowed-names = ["foo", "bar", "baz", "quux"]
+
+# Maximum number of boolean parameters (prefer structs or enums)
+max-fn-params-bools = 3
+
+# Maximum trait bounds before suggesting where clause
+max-trait-bounds = 5
+
+# Check for missing documentation in public crate items
+# Set to true to require docs on all public items
+missing-docs-in-crate-items = false
+
+# Avoid breaking exported API when using cargo clippy --fix
+avoid-breaking-exported-api = true
+
+# Minimum Supported Rust Version (MSRV) - from Cargo.toml
+msrv = "1.93"
+
+# Enum variant name threshold
+# Warn if this many variants share a common prefix/suffix
+enum-variant-name-threshold = 3
+
+# Warn on all wildcard imports (prefer explicit imports)
+warn-on-all-wildcard-imports = true
+
+# Allow certain wildcard imports (e.g., preludes)
+allowed-wildcard-imports = []
+
+# Large error type threshold (bytes)
+# Warn about error types larger than this
+large-error-threshold = 128
+
+# Array size threshold (number of elements)
+# Suggest using a slice instead of large arrays
+array-size-threshold = 512000
+
+# Pass-by-value size limit (bytes)
+# Warn about large types passed by value
+pass-by-value-size-limit = 256
+
+# Trivial copy size limit (bytes)
+# Types smaller than this are trivial to Copy
+trivial-copy-size-limit = 128
+
+# Vec<Box<T>> size threshold
+# Warn about Vec<Box<T>> where T is smaller than this
+vec-box-size-threshold = 4096
+
+# Verbose bit mask threshold
+# Warn about bit masks with more than this many bits
+verbose-bit-mask-threshold = 1
+
+# Single-char binding names threshold
+# Allow single-char names in closures if they have fewer than this many statements
+single-char-binding-names-threshold = 4
+
+# Maximum suggested slice pattern length
+# Suggest slice patterns only up to this length
+max-suggested-slice-pattern-length = 3
+
+# Accept comments above attributes
+accept-comment-above-attributes = true
+
+# Accept comments above statements
+accept-comment-above-statement = true
