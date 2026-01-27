@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stale `#[allow(dead_code)]` / `#[expect(dead_code)]` attributes on 5 public items that edition 2024 no longer considers dead code
 - Stale `#[expect(clippy::unwrap_used)]` / `#[expect(clippy::expect_used)]` attributes on 3 functions that no longer trigger those lints
 
+### Fixed
+
+- Set minimum versions for all dependencies to fix `-Z minimal-versions` CI check — prevents resolution to ancient versions that don't compile on modern Rust (e.g., `flate2 1.0.0` → `gcc 0.3.3`, `lazy_static 1.0.0` → missing API)
+
 ## [0.2.0] - 2025-01-27
 
 ### Added
