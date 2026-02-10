@@ -90,9 +90,9 @@ async fn test_single_part_yenc_download() {
 
                         // Verify CRC32
                         let crc_valid = decoded.verify_crc32();
-                        println!("  CRC32 valid: {}", crc_valid);
+                        println!("  CRC32 valid: {:?}", crc_valid);
 
-                        assert!(crc_valid, "CRC32 verification failed");
+                        assert_ne!(crc_valid, Some(false), "CRC32 verification failed");
                         assert_eq!(
                             decoded.data.len() as u64,
                             decoded.trailer.size,
@@ -139,8 +139,9 @@ async fn test_yenc_crc32_verification() {
     println!("  CRC32 expected: {:x}", decoded.trailer.crc32.unwrap());
     println!("  CRC32 calculated: {:x}", decoded.calculated_crc32);
 
-    assert!(
+    assert_eq!(
         decoded.verify_crc32(),
+        Some(true),
         "CRC32 verification failed for test data"
     );
     assert_eq!(decoded.header.name, "test.txt");
@@ -223,7 +224,11 @@ async fn test_multipart_yenc_download() {
                 println!("  Part size: {} bytes", decoded.data.len());
 
                 assert!(decoded.is_multipart(), "Expected multi-part yEnc");
-                assert!(decoded.verify_crc32(), "Part CRC32 verification failed");
+                assert_ne!(
+                    decoded.verify_crc32(),
+                    Some(false),
+                    "Part CRC32 verification failed"
+                );
 
                 // Try to add to assembler
                 match assembler.add_part(decoded) {
@@ -308,8 +313,8 @@ async fn test_multipart_assembly_with_known_data() {
 
     assert!(decoded1.is_multipart());
     assert!(decoded2.is_multipart());
-    assert!(decoded1.verify_crc32());
-    assert!(decoded2.verify_crc32());
+    assert_eq!(decoded1.verify_crc32(), Some(true));
+    assert_eq!(decoded2.verify_crc32(), Some(true));
 
     // Assemble
     let mut assembler = YencMultipartAssembler::new();
@@ -333,8 +338,9 @@ async fn test_corrupted_yenc_handling() {
     let decoded = yenc_decode(corrupted).unwrap();
 
     // Decode should succeed but CRC32 verification should fail
-    assert!(
-        !decoded.verify_crc32(),
+    assert_eq!(
+        decoded.verify_crc32(),
+        Some(false),
         "CRC32 should be invalid for corrupted data"
     );
     println!("Correctly detected corrupted yEnc data");
@@ -395,5 +401,5 @@ async fn test_yenc_preserves_binary_data() {
 
     // Verify it's actually binary (contains byte 0)
     assert!(decoded.data.contains(&0), "Should contain null bytes");
-    assert!(decoded.verify_crc32(), "CRC32 should match");
+    assert_eq!(decoded.verify_crc32(), Some(true), "CRC32 should match");
 }

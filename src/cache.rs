@@ -199,7 +199,7 @@ impl LruHeaderCache {
 
     /// Update access time for an entry
     fn touch(&mut self, article_number: &u64) {
-        self.access_counter += 1;
+        self.access_counter = self.access_counter.wrapping_add(1);
         self.access_order
             .insert(*article_number, self.access_counter);
     }

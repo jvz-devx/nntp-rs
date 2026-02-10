@@ -1,7 +1,7 @@
 use crate::Result;
 use crate::commands;
 use crate::response::codes;
-use tracing::{debug, trace, warn};
+use tracing::{debug, trace};
 
 use super::NntpClient;
 use super::state::CompressionMode;
@@ -71,58 +71,51 @@ impl NntpClient {
     }
 
     /// Decompress data based on current compression mode
-    pub(super) fn maybe_decompress(&mut self, data: &[u8]) -> Vec<u8> {
+    pub(super) fn maybe_decompress(&mut self, data: &[u8]) -> Result<Vec<u8>> {
         use flate2::read::{DeflateDecoder, ZlibDecoder};
         use std::io::Read;
 
         match self.compression_mode {
-            CompressionMode::None => data.to_vec(),
+            CompressionMode::None => Ok(data.to_vec()),
             CompressionMode::HeadersOnly => {
                 // Use zlib decompression (server sends zlib despite calling it "GZIP")
                 let mut decoder = ZlibDecoder::new(data);
                 // Pre-allocate: compressed data typically expands 3-5x
                 let mut decompressed = Vec::with_capacity(data.len() * 3);
-                match decoder.read_to_end(&mut decompressed) {
-                    Ok(_) => {
-                        self.bytes_compressed += data.len() as u64;
-                        self.bytes_decompressed += decompressed.len() as u64;
-                        trace!(
-                            "Decompressed {} bytes to {} bytes (zlib)",
-                            data.len(),
-                            decompressed.len()
-                        );
-                        decompressed
-                    }
-                    Err(e) => {
-                        warn!("Zlib decompression failed: {}. Using uncompressed data.", e);
-                        data.to_vec()
-                    }
-                }
+                decoder.read_to_end(&mut decompressed).map_err(|e| {
+                    crate::error::NntpError::InvalidResponse(format!(
+                        "Zlib decompression failed: {}",
+                        e
+                    ))
+                })?;
+                self.bytes_compressed += data.len() as u64;
+                self.bytes_decompressed += decompressed.len() as u64;
+                trace!(
+                    "Decompressed {} bytes to {} bytes (zlib)",
+                    data.len(),
+                    decompressed.len()
+                );
+                Ok(decompressed)
             }
             CompressionMode::FullSession => {
                 // Use deflate decompression
                 let mut decoder = DeflateDecoder::new(data);
                 // Pre-allocate: compressed data typically expands 3-5x
                 let mut decompressed = Vec::with_capacity(data.len() * 3);
-                match decoder.read_to_end(&mut decompressed) {
-                    Ok(_) => {
-                        self.bytes_compressed += data.len() as u64;
-                        self.bytes_decompressed += decompressed.len() as u64;
-                        trace!(
-                            "Decompressed {} bytes to {} bytes (deflate)",
-                            data.len(),
-                            decompressed.len()
-                        );
-                        decompressed
-                    }
-                    Err(e) => {
-                        warn!(
-                            "Deflate decompression failed: {}. Using uncompressed data.",
-                            e
-                        );
-                        data.to_vec()
-                    }
-                }
+                decoder.read_to_end(&mut decompressed).map_err(|e| {
+                    crate::error::NntpError::InvalidResponse(format!(
+                        "Deflate decompression failed: {}",
+                        e
+                    ))
+                })?;
+                self.bytes_compressed += data.len() as u64;
+                self.bytes_decompressed += decompressed.len() as u64;
+                trace!(
+                    "Decompressed {} bytes to {} bytes (deflate)",
+                    data.len(),
+                    decompressed.len()
+                );
+                Ok(decompressed)
             }
         }
     }

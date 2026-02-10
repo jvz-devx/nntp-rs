@@ -374,10 +374,10 @@ async fn bench_header_throughput() {
 
     for article_num in test_range {
         // Get message-id first
-        if let Ok(stat_info) = client.stat(&article_num.to_string()).await {
-            if client.fetch_head(&stat_info.message_id).await.is_ok() {
-                success_count += 1;
-            }
+        if let Ok(stat_info) = client.stat(&article_num.to_string()).await
+            && client.fetch_head(&stat_info.message_id).await.is_ok()
+        {
+            success_count += 1;
         }
     }
 

@@ -50,21 +50,53 @@ pub struct YencDecoded {
 
 impl YencDecoded {
     /// Verify CRC32 matches expected value
-    pub fn verify_crc32(&self) -> bool {
+    ///
+    /// Returns:
+    /// - `Some(true)` if CRC32 matches expected value
+    /// - `Some(false)` if CRC32 does not match (data is corrupted)
+    /// - `None` if no expected CRC32 is available (cannot verify)
+    pub fn verify_crc32(&self) -> Option<bool> {
         // For multi-part files, check pcrc32 (part CRC)
         if let Some(expected) = self.trailer.pcrc32 {
-            return self.calculated_crc32 == expected;
+            return Some(self.calculated_crc32 == expected);
         }
         // For single-part files, check crc32
         if let Some(expected) = self.trailer.crc32 {
-            return self.calculated_crc32 == expected;
+            return Some(self.calculated_crc32 == expected);
         }
-        // No CRC to verify
-        false
+        // No CRC to verify against
+        None
     }
 
     /// Check if this is a multi-part file
     pub fn is_multipart(&self) -> bool {
         self.header.part.is_some() && self.header.total.is_some()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_verify_crc32_returns_none() {
+        let decoded = YencDecoded {
+            header: YencHeader {
+                line: 128,
+                size: 10,
+                name: "test.bin".to_string(),
+                part: None,
+                total: None,
+            },
+            part: None,
+            trailer: YencEnd {
+                size: 10,
+                crc32: None,
+                pcrc32: None,
+            },
+            data: vec![0; 10],
+            calculated_crc32: 0xDEADBEEF,
+        };
+        assert_eq!(decoded.verify_crc32(), None);
     }
 }

@@ -194,7 +194,7 @@ mod tests {
         // Verify round-trip
         let decoded = decode(&encoded).unwrap();
         assert_eq!(decoded.data, data);
-        assert!(decoded.verify_crc32());
+        assert_eq!(decoded.verify_crc32(), Some(true));
     }
 
     #[test]
@@ -216,7 +216,7 @@ mod tests {
         // Verify round-trip
         let decoded = decode(&encoded).unwrap();
         assert_eq!(decoded.data, data);
-        assert!(decoded.verify_crc32());
+        assert_eq!(decoded.verify_crc32(), Some(true));
     }
 
     #[test]
@@ -228,7 +228,7 @@ mod tests {
         // Verify round-trip
         let decoded = decode(&encoded).unwrap();
         assert_eq!(decoded.data, data);
-        assert!(decoded.verify_crc32());
+        assert_eq!(decoded.verify_crc32(), Some(true));
     }
 
     #[test]
@@ -293,7 +293,7 @@ mod tests {
         // Verify round-trip
         let decoded = decode(&encoded).unwrap();
         assert_eq!(decoded.data, data);
-        assert!(decoded.verify_crc32());
+        assert_eq!(decoded.verify_crc32(), Some(true));
     }
 
     #[test]
@@ -316,7 +316,7 @@ mod tests {
         // Verify round-trip
         let decoded = decode(&encoded).unwrap();
         assert_eq!(decoded.data, data);
-        assert!(decoded.verify_crc32());
+        assert_eq!(decoded.verify_crc32(), Some(true));
     }
 
     #[test]
@@ -328,7 +328,7 @@ mod tests {
         // Verify round-trip
         let decoded = decode(&encoded).unwrap();
         assert_eq!(decoded.data, data);
-        assert!(decoded.verify_crc32());
+        assert_eq!(decoded.verify_crc32(), Some(true));
     }
 
     #[test]
@@ -347,7 +347,11 @@ mod tests {
             let encoded = encode(&data, "test.bin", 128, None).unwrap();
             let decoded = decode(&encoded).unwrap();
             assert_eq!(decoded.data, data, "Round-trip failed for data: {:?}", data);
-            assert!(decoded.verify_crc32(), "CRC32 verification failed");
+            assert_eq!(
+                decoded.verify_crc32(),
+                Some(true),
+                "CRC32 verification failed"
+            );
         }
     }
 

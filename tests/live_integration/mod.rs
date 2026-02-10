@@ -26,14 +26,24 @@ use nntp_rs::ServerConfig;
 use std::sync::Arc;
 
 /// Get server configuration from environment variables
+///
+/// Supports both naming conventions with fallback:
+/// - `NNTP_USER` or `NNTP_USERNAME`
+/// - `NNTP_PASS` or `NNTP_PASSWORD`
+/// - `NNTP_PORT` or `NNTP_PORT_SSL` (default: 563)
 pub fn get_test_config() -> ServerConfig {
     let host = std::env::var("NNTP_HOST").expect("NNTP_HOST not set");
     let port = std::env::var("NNTP_PORT")
+        .or_else(|_| std::env::var("NNTP_PORT_SSL"))
         .ok()
         .and_then(|p| p.parse().ok())
         .unwrap_or(563);
-    let username = std::env::var("NNTP_USER").expect("NNTP_USER not set");
-    let password = std::env::var("NNTP_PASS").expect("NNTP_PASS not set");
+    let username = std::env::var("NNTP_USER")
+        .or_else(|_| std::env::var("NNTP_USERNAME"))
+        .expect("NNTP_USER or NNTP_USERNAME not set");
+    let password = std::env::var("NNTP_PASS")
+        .or_else(|_| std::env::var("NNTP_PASSWORD"))
+        .expect("NNTP_PASS or NNTP_PASSWORD not set");
 
     ServerConfig {
         host,
@@ -68,6 +78,9 @@ pub fn get_binary_test_group() -> String {
 // Module declarations
 pub mod benchmarks;
 pub mod binary_yenc;
+pub mod high_throughput;
+pub mod listing_extended;
 pub mod nzb;
 pub mod par2;
+pub mod pool;
 pub mod rfc_commands;

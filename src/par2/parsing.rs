@@ -108,6 +108,12 @@ impl Par2File {
             // Parse packet body based on type
             let packet_type = PacketType::from_bytes(&header.packet_type);
             let body_offset = offset + PAR2_PACKET_HEADER_SIZE;
+            if (header.length as usize) < PAR2_PACKET_HEADER_SIZE {
+                return Err(NntpError::InvalidResponse(format!(
+                    "PAR2 packet length {} is smaller than header size {} at offset {}",
+                    header.length, PAR2_PACKET_HEADER_SIZE, offset
+                )));
+            }
             let body_len = header.length as usize - PAR2_PACKET_HEADER_SIZE;
 
             if body_offset + body_len > data.len() {
@@ -296,6 +302,11 @@ fn parse_main_packet(data: &[u8]) -> Result<MainPacket> {
     }
 
     let slice_size = read_u64_le(data, 0)?;
+    if slice_size == 0 {
+        return Err(NntpError::InvalidResponse(
+            "PAR2 Main packet has slice_size of 0".to_string(),
+        ));
+    }
     let file_count = read_u32_le(data, 8)?;
 
     // Read file IDs (MD5_HASH_SIZE bytes each)
@@ -619,5 +630,38 @@ mod tests {
         let data = vec![1, 2, 3, 4, 5, 6, 7, 8];
         // Try to read at offset 2, but only 6 bytes left
         assert!(read_u64_le(&data, 2).is_err());
+    }
+
+    #[test]
+    fn test_parse_main_packet_zero_slice_size() {
+        let mut data = vec![0u8; MAIN_PACKET_MIN_SIZE];
+        // Slice size: 0 (should be rejected)
+        data[0..8].copy_from_slice(&0u64.to_le_bytes());
+        // File count: 0
+        data[8..MAIN_PACKET_MIN_SIZE].copy_from_slice(&0u32.to_le_bytes());
+
+        let result = parse_main_packet(&data);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_packet_header_length_underflow() {
+        // Construct a full 64-byte header with length field set to 10
+        // (less than PAR2_PACKET_HEADER_SIZE = 64), which should error
+        // during Par2File::parse rather than cause arithmetic underflow.
+        let mut data = vec![0u8; PAR2_PACKET_HEADER_SIZE];
+        // Magic bytes
+        data[0..PAR2_MAGIC_SIZE].copy_from_slice(PAR2_MAGIC);
+        // Length: 10 (smaller than header size of 64)
+        data[PAR2_MAGIC_SIZE..(PAR2_MAGIC_SIZE + 8)].copy_from_slice(&10u64.to_le_bytes());
+        // Set ID
+        data[(PAR2_MAGIC_SIZE + 8 + MD5_HASH_SIZE)..(PAR2_MAGIC_SIZE + 8 + MD5_HASH_SIZE * 2)]
+            .fill(1);
+        // Packet type: Main
+        data[(PAR2_MAGIC_SIZE + 8 + MD5_HASH_SIZE * 2)..PAR2_PACKET_HEADER_SIZE]
+            .copy_from_slice(b"PAR 2.0\0Main\0\0\0\0");
+
+        let result = Par2File::parse(&data);
+        assert!(result.is_err());
     }
 }

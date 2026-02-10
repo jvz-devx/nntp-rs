@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-02-10
+
+### Added
+
+- 64 MB size limit on compressed NNTP blocks (`MAX_COMPRESSED_BLOCK_SIZE`) to prevent OOM from malicious or broken servers
+- PAR2 parser validates `packet.length >= header_size` before subtraction (prevents arithmetic underflow on malformed files)
+- PAR2 parser rejects `slice_size == 0` in main packets (prevents division-by-zero)
+- `BandwidthLimiter::new()` panics on `bytes_per_second == 0` (prevents division-by-zero; documented with `# Panics`)
+- `LruHeaderCache` uses `wrapping_add` for access counter (explicit overflow behavior across debug/release)
+- Live integration tests: `high_throughput`, `listing_extended`, and `pool` test modules
+- Live integration `get_test_config()` supports fallback env var names (`NNTP_USERNAME`, `NNTP_PASSWORD`, `NNTP_PORT_SSL`)
+
+### Changed
+
+- **Breaking:** `YencDecoded::verify_crc32()` now returns `Option<bool>` instead of `bool` — `None` means no CRC available, `Some(false)` means corruption, `Some(true)` means verified
+- `YencMultipartAssembler::add_part()` and `ArticleAssembler` now treat missing CRC as unverifiable instead of corrupted — only confirmed CRC mismatches (`Some(false)`) are rejected
+- `NntpClient::maybe_decompress()` now returns `Result<Vec<u8>>` — decompression errors are propagated instead of silently returning raw compressed data
+
+### Fixed
+
+- Binary reader (`read_multiline_response_binary`) now strips NNTP line terminators (`\r\n`) before appending to payload — previously embedded protocol framing bytes into binary data
+- PAR2 verification: slices with missing IFSC checksums are now correctly reported as damaged (previously silently skipped)
+- PAR2 verification: when no IFSC packet exists and MD5 hashes fail, all slices are now marked damaged (previously reported 0 damaged slices)
+- `ArticleAssembler` no longer clones decoded data unnecessarily for multipart files
 
 ## [0.2.1] - 2026-01-27
 

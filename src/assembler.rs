@@ -141,7 +141,7 @@ impl ArticleAssembler {
         let decoded = decode(article_data)?;
 
         // Verify CRC32
-        if !decoded.verify_crc32() {
+        if decoded.verify_crc32() == Some(false) {
             part_info.status = PartStatus::Corrupted;
             return Err(NntpError::InvalidResponse(format!(
                 "CRC32 mismatch for segment {}: expected {:?}, got {}",
@@ -153,11 +153,12 @@ impl ArticleAssembler {
 
         // Update part info
         part_info.status = PartStatus::Downloaded;
-        part_info.decoded = Some(decoded.clone());
 
-        // Add to yEnc assembler if multi-part
+        // Add to yEnc assembler if multi-part, otherwise store decoded data
         if decoded.is_multipart() {
             self.yenc_assembler.add_part(decoded)?;
+        } else {
+            part_info.decoded = Some(decoded);
         }
 
         Ok(())

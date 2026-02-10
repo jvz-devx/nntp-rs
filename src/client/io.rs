@@ -21,6 +21,8 @@ const SINGLE_LINE_TIMEOUT: Duration = Duration::from_secs(60);
 const MULTILINE_TIMEOUT: Duration = Duration::from_secs(180);
 const COMPRESSED_READ_BUFFER_SIZE: usize = 256 * 1024;
 const BINARY_DATA_INITIAL_CAPACITY: usize = 512 * 1024;
+/// Maximum size for a compressed block to prevent OOM from malicious/broken servers (64 MB)
+const MAX_COMPRESSED_BLOCK_SIZE: usize = 64 * 1024 * 1024;
 
 /// Strip NNTP byte-stuffing from a line (leading ".." becomes ".").
 fn strip_byte_stuffing(line: &str) -> &str {
@@ -132,7 +134,7 @@ impl NntpClient {
                 trace!("Read {} compressed bytes", all_data.len());
 
                 // Decompress the entire block
-                let decompressed = self.maybe_decompress(&all_data);
+                let decompressed = self.maybe_decompress(&all_data)?;
                 trace!("Decompressed to {} bytes", decompressed.len());
 
                 // Parse decompressed data into lines
@@ -201,6 +203,13 @@ impl NntpClient {
 
             all_data.extend_from_slice(&buffer[..n]);
 
+            if all_data.len() > MAX_COMPRESSED_BLOCK_SIZE {
+                return Err(NntpError::InvalidResponse(format!(
+                    "Compressed block exceeds maximum size of {} bytes",
+                    MAX_COMPRESSED_BLOCK_SIZE
+                )));
+            }
+
             if all_data.ends_with(b".\r\n") {
                 all_data.truncate(all_data.len() - 3);
                 break;
@@ -264,7 +273,7 @@ impl NntpClient {
 
             if response_is_compressed {
                 let all_data = self.read_compressed_block().await?;
-                let decompressed = self.maybe_decompress(&all_data);
+                let decompressed = self.maybe_decompress(&all_data)?;
                 return Ok(crate::response::NntpBinaryResponse {
                     code,
                     message,
@@ -289,11 +298,21 @@ impl NntpClient {
                     break;
                 }
 
-                // Handle dot-stuffing: lines starting with ".." become "."
-                if line_bytes.starts_with(b"..") {
-                    data.extend_from_slice(&line_bytes[1..]);
+                // Strip trailing \r\n (NNTP line terminator, not part of payload)
+                let content_end = if line_bytes.ends_with(b"\r\n") {
+                    line_bytes.len() - 2
+                } else if line_bytes.ends_with(b"\n") {
+                    line_bytes.len() - 1
                 } else {
-                    data.extend_from_slice(&line_bytes);
+                    line_bytes.len()
+                };
+                let line_content = &line_bytes[..content_end];
+
+                // Handle dot-stuffing: lines starting with ".." become "."
+                if line_content.starts_with(b"..") {
+                    data.extend_from_slice(&line_content[1..]);
+                } else {
+                    data.extend_from_slice(line_content);
                 }
             }
 
@@ -503,34 +522,48 @@ mod tests {
     /// Test binary dot-stuffing removal for read_multiline_response_binary
     ///
     /// Binary mode must also handle dot-stuffing but operates on bytes, not strings.
+    /// After stripping line terminators, dot-stuffing is handled on the content.
     #[test]
     fn test_binary_dot_stuffing() {
-        // Line starting with ".." - should strip first dot
+        // Helper to simulate the binary reader logic: strip \r\n then handle dot-stuffing
+        fn process_line(line_bytes: &[u8]) -> Vec<u8> {
+            // Strip trailing \r\n
+            let content_end = if line_bytes.ends_with(b"\r\n") {
+                line_bytes.len() - 2
+            } else if line_bytes.ends_with(b"\n") {
+                line_bytes.len() - 1
+            } else {
+                line_bytes.len()
+            };
+            let line_content = &line_bytes[..content_end];
+
+            // Handle dot-stuffing
+            if line_content.starts_with(b"..") {
+                line_content[1..].to_vec()
+            } else {
+                line_content.to_vec()
+            }
+        }
+
+        // Line starting with ".." - should strip first dot AND \r\n
         let line_bytes = b"..Binary data\r\n";
-        let processed = if line_bytes.starts_with(b"..") {
-            &line_bytes[1..]
-        } else {
-            line_bytes
-        };
-        assert_eq!(processed, b".Binary data\r\n");
+        let processed = process_line(line_bytes);
+        assert_eq!(processed, b".Binary data");
 
-        // Normal line - no change
+        // Normal line - strip \r\n only
         let line_bytes = b"Binary data\r\n";
-        let processed = if line_bytes.starts_with(b"..") {
-            &line_bytes[1..]
-        } else {
-            line_bytes
-        };
-        assert_eq!(processed, b"Binary data\r\n");
+        let processed = process_line(line_bytes);
+        assert_eq!(processed, b"Binary data");
 
-        // Three dots - strip one
+        // Three dots - strip one dot and \r\n
         let line_bytes = b"...\r\n";
-        let processed = if line_bytes.starts_with(b"..") {
-            &line_bytes[1..]
-        } else {
-            line_bytes
-        };
-        assert_eq!(processed, b"..\r\n");
+        let processed = process_line(line_bytes);
+        assert_eq!(processed, b"..");
+
+        // LF-only line ending
+        let line_bytes = b"Data line\n";
+        let processed = process_line(line_bytes);
+        assert_eq!(processed, b"Data line");
     }
 
     /// Test binary terminator detection for optimized article fetching

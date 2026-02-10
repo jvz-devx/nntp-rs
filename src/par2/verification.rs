@@ -125,10 +125,14 @@ impl Par2File {
             }
 
             // Verify this slice if IFSC packet exists
-            if let Some(ifsc) = self.ifsc_packets.get(&mapping.file_id)
-                && is_slice_damaged(file_data, ifsc, mapping) == Some(true)
-            {
-                damaged_slices.push(global_idx);
+            if let Some(ifsc) = self.ifsc_packets.get(&mapping.file_id) {
+                match is_slice_damaged(file_data, ifsc, mapping) {
+                    Some(true) => damaged_slices.push(global_idx),
+                    // Missing checksum for this slice index — treat as damaged
+                    // since we cannot verify its integrity
+                    None => damaged_slices.push(global_idx),
+                    Some(false) => {} // Slice verified OK
+                }
             }
         }
 
@@ -230,7 +234,15 @@ impl Par2File {
         let damaged_slices = if let Some(ifsc) = self.ifsc_packets.get(file_id) {
             self.verify_slices(file_data, ifsc)?
         } else {
-            vec![] // No slice checksums available
+            // No IFSC packet — cannot verify individual slices.
+            // Since hashes already failed, mark all slices as damaged.
+            let slice_size = self.slice_size().unwrap_or(1) as usize;
+            let num_slices = if slice_size > 0 {
+                file_data.len().div_ceil(slice_size)
+            } else {
+                1
+            };
+            (0..num_slices).collect()
         };
 
         let status = if damaged_slices.is_empty() && !hash_match {
@@ -462,5 +474,113 @@ mod tests {
         let file_data_map = HashMap::new();
         let results = par2.verify_all(&file_data_map).unwrap();
         assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn test_verify_file_no_ifsc_hash_mismatch() {
+        // Set up a Par2File with a file description and main packet but no IFSC packet.
+        // File data has a wrong MD5 hash. verify_file() should return Damaged with
+        // all slices marked.
+        let mut par2 = Par2File::new();
+        par2.set_id = [1; 16];
+
+        let file_id = [1; 16];
+        let file_data = vec![0xAA; 2048]; // 2048 bytes of 0xAA
+
+        // Compute wrong hashes (use all-zeros, which won't match actual data)
+        par2.file_descriptions.insert(
+            file_id,
+            FileDescriptionPacket {
+                file_id,
+                hash: [0; 16],     // wrong hash
+                hash_16k: [0; 16], // wrong hash
+                length: 2048,
+                name: "test.bin".into(),
+            },
+        );
+
+        par2.main = Some(MainPacket {
+            slice_size: 1024,
+            file_count: 1,
+            file_ids: vec![file_id],
+            non_recoverable_file_ids: vec![],
+        });
+
+        // No IFSC packet inserted — par2.ifsc_packets is empty
+
+        let verification = par2.verify_file(&file_data, &file_id).unwrap();
+        assert_eq!(verification.hash_match, Some(false));
+        match verification.status {
+            FileStatus::Damaged(ref slices) => {
+                // 2048 bytes / 1024 slice_size = 2 slices, both should be damaged
+                assert_eq!(slices.len(), 2);
+                assert_eq!(slices, &[0, 1]);
+            }
+            _ => panic!("Expected Damaged status, got {:?}", verification.status),
+        }
+    }
+
+    #[test]
+    fn test_is_slice_damaged_missing_checksum() {
+        // Set up a Par2File where the IFSC packet has fewer checksums than slices.
+        // Slices without checksums should be reported as damaged.
+        let mut par2 = Par2File::new();
+        par2.set_id = [1; 16];
+
+        let file_id = [1; 16];
+        // 3072 bytes -> 3 slices at 1024 each
+        let file_data = vec![0xBB; 3072];
+
+        // Compute real MD5 so we get past the hash check and into slice verification
+        let mut hasher = md5::Md5::new();
+        md5::Digest::update(&mut hasher, &file_data);
+        let file_hash: [u8; 16] = hasher.finalize().into();
+
+        let mut hasher_16k = md5::Md5::new();
+        md5::Digest::update(&mut hasher_16k, &file_data);
+        let file_hash_16k: [u8; 16] = hasher_16k.finalize().into();
+
+        par2.file_descriptions.insert(
+            file_id,
+            FileDescriptionPacket {
+                file_id,
+                hash: file_hash,
+                hash_16k: file_hash_16k,
+                length: 3072,
+                name: "test.bin".into(),
+            },
+        );
+
+        par2.main = Some(MainPacket {
+            slice_size: 1024,
+            file_count: 1,
+            file_ids: vec![file_id],
+            non_recoverable_file_ids: vec![],
+        });
+
+        // Compute correct CRC32 for slices 0 and 1, but omit slice 2
+        let mut crc0 = crc32fast::Hasher::new();
+        crc0.update(&file_data[0..1024]);
+        let mut crc1 = crc32fast::Hasher::new();
+        crc1.update(&file_data[1024..2048]);
+
+        par2.ifsc_packets.insert(
+            file_id,
+            IfscPacket {
+                file_id,
+                checksums: vec![crc0.finalize(), crc1.finalize()], // only 2 of 3
+            },
+        );
+
+        let mut file_data_map = HashMap::new();
+        file_data_map.insert(file_id, file_data);
+
+        let (damaged, missing) = par2.identify_damaged_slices(&file_data_map).unwrap();
+        // Slice 2 has no checksum in the IFSC packet -> should be damaged
+        assert!(
+            damaged.contains(&2),
+            "Slice 2 should be damaged, got damaged={damaged:?}"
+        );
+        assert!(missing.is_empty(), "No slices should be missing");
     }
 }

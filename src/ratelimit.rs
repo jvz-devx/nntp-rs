@@ -45,7 +45,14 @@ impl BandwidthLimiter {
     /// // Limit to 1 MB/s with 2 MB burst
     /// let limiter = BandwidthLimiter::new(1_000_000, Some(2_000_000));
     /// ```
+    /// # Panics
+    ///
+    /// Panics if `bytes_per_second` is 0.
     pub fn new(bytes_per_second: u64, burst_size: Option<u64>) -> Self {
+        assert!(
+            bytes_per_second > 0,
+            "bytes_per_second must be greater than 0"
+        );
         let capacity = burst_size.unwrap_or(bytes_per_second) as f64;
         Self {
             inner: Arc::new(Mutex::new(BandwidthLimiterInner {
@@ -317,6 +324,12 @@ mod tests {
         let limiter = ConnectionLimiter::new(5);
         assert_eq!(limiter.max_connections(), 5);
         assert_eq!(limiter.available(), 5);
+    }
+
+    #[test]
+    #[should_panic(expected = "bytes_per_second must be greater than 0")]
+    fn test_bandwidth_limiter_zero_rate_panics() {
+        let _limiter = BandwidthLimiter::new(0, None);
     }
 
     #[tokio::test]

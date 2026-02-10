@@ -139,7 +139,7 @@ impl YencMultipartAssembler {
         }
 
         // Validate part CRC32
-        if !decoded.verify_crc32() {
+        if decoded.verify_crc32() == Some(false) {
             return Err(NntpError::InvalidResponse(format!(
                 "Part {} CRC32 verification failed",
                 part_num
